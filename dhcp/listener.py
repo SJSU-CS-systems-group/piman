@@ -50,7 +50,7 @@ options = [
     ('pad', None, None),
     ('subnet_mask', inet_ntoa, inet_aton),
     ('time_offset', None, None),
-    ('router', inet_ntoaX, inet_atonX),
+    ('router', inet_ntoa, inet_aton),
     ('time_server', inet_ntoaX, inet_atonX),
     ('name_server', inet_ntoaX, inet_atonX),
     ('domain_name_server', inet_ntoaX, inet_atonX),
@@ -113,15 +113,15 @@ options = [
     ('maximum_dhcp_message_size', shortunpack, shortpack),
     ('renewal_time_value', None, None),
     ('rebinding_time_value', None, None),
-    ('vendor_class_identifier', None, None),
+    ('vendor_class_identifier', lambda d: d.decode('ASCII'), lambda d: d.encode('ASCII')),
     ('client_identifier', macunpack, macpack),
-    ('tftp_server_name', None, None),
-    ('boot_file_name', None, None),
+    ('option_62', None, None),
+    ('option_63', None, None),
 # Application and Service Parameters Part 2
     ('network_information_service_domain', None, None),
     ('network_information_servers', inet_ntoaX, inet_atonX),
-    ('', None, None),
-    ('', None, None),
+    ('tftp_server_name', lambda d: d.decode('ASCII'), lambda d: d.encode('ASCII')),
+    ('boot_file_name', lambda d: d.decode('ASCII'), lambda d: d.encode('ASCII')),
     ('mobile_ip_home_agent', inet_ntoaX, inet_atonX),
     ('smtp_server', inet_ntoaX, inet_atonX),
     ('pop_servers', inet_ntoaX, inet_atonX),
@@ -241,7 +241,7 @@ assert p.dhcp_message_type == 'DHCPACK'
 assert p.options[53] == b'\x05'
 assert p.server_identifier == '192.168.0.1'
 assert p.subnet_mask == '255.255.255.0'
-assert p.router == ['192.168.0.1']
+#assert p.router == '172.30.3.1'
 assert p.domain_name_server == ['192.168.0.1']
 str(p)
 

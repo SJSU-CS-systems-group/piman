@@ -1,19 +1,20 @@
 #!/usr/bin/python3
 import time
 import threading
-import struct
 import queue
 import collections
 import traceback
-import random
 import socket
 
-from listener import *
+from .listener import *
 
 def get_host_ip_addresses():
     return gethostbyname_ex(gethostname())[2]
 
-
+"""
+This class contains specified attributes which will be populated, these attributes are associated with
+the required options for our DHCP+PXE server. 
+"""
 class WriteBootProtocolPacket(object):
 
     message_type = 2 # 1 for client -> server 2 for server -> client
@@ -26,17 +27,22 @@ class WriteBootProtocolPacket(object):
     seconds_elapsed = 0
     bootp_flags = 0 # unicast
 
+    # The following are set, but altered within the "send_offer" function inside the transaction class
     client_ip_address = '0.0.0.0'
     your_ip_address = '0.0.0.0'
     next_server_ip_address = '0.0.0.0'
     relay_agent_ip_address = '0.0.0.0'
-
+    
+    vendor_class_identifier = "PXEClient"
+    boot_file_name = "bootcode.bin"
+    router = '172.30.3.1'
     client_mac_address = None
     magic_cookie = '99.130.83.99'
 
     parameter_order = []
     
     def __init__(self, configuration):
+        self.tftp_server_name = configuration.ip
         for i in range(256):
             names = ['option_{}'.format(i)]
             if i < len(options) and hasattr(configuration, options[i][0]):
@@ -138,6 +144,11 @@ class DelayWorker(object):
     def close(self):
         self.closed = True
 
+"""
+The transaction class handles data transfers. One of the key functions here is the "send_offer" function which is 
+responsible for sending out the initial offer packet. It is also responsible for receiving the initial DHCP Discover 
+packet which is broadcast by the client.
+"""
 class Transaction(object):
 
     def __init__(self, server):
@@ -171,23 +182,31 @@ class Transaction(object):
     def received_dhcp_discover(self, discovery):
         if self.is_done(): return
         self.configuration.debug('discover:\n {}'.format(str(discovery).replace('\n', '\n\t')))
-        self.send_offer(discovery)
+        should_send_offer = False
+        for known_host in self.server.hosts.get():
+            if discovery.client_mac_address == known_host.to_tuple()[0]:
+                should_send_offer = True
+    
+        if should_send_offer:
+            self.send_offer(discovery)
+        else:
+            print("unknown mac_address. will not assign ip")
 
     def send_offer(self, discovery):
         # https://tools.ietf.org/html/rfc2131
         offer = WriteBootProtocolPacket(self.configuration)
         offer.parameter_order = discovery.parameter_request_list
         mac = discovery.client_mac_address
-        ip = offer.your_ip_address = self.server.get_ip_address(discovery)
-        # offer.client_ip_address = 
+        ip = offer.your_ip_address = self.server.get_ip_address(discovery) 
         offer.transaction_id = discovery.transaction_id
-        # offer.next_server_ip_address =
         offer.relay_agent_ip_address = discovery.relay_agent_ip_address
         offer.client_mac_address = mac
         offer.client_ip_address = discovery.client_ip_address or '0.0.0.0'
         offer.bootp_flags = discovery.bootp_flags
         offer.dhcp_message_type = 'DHCPOFFER'
+        
         offer.client_identifier = mac
+        #print(offer)
         self.server.broadcast(offer)
     
     def received_dhcp_request(self, request):
@@ -200,7 +219,6 @@ class Transaction(object):
         ack = WriteBootProtocolPacket(self.configuration)
         ack.parameter_order = request.parameter_request_list
         ack.transaction_id = request.transaction_id
-        # ack.next_server_ip_address =
         ack.bootp_flags = request.bootp_flags
         ack.relay_agent_ip_address = request.relay_agent_ip_address
         mac = request.client_mac_address
@@ -217,21 +235,26 @@ class Transaction(object):
 
 class DHCPServerConfiguration(object):
     
-    dhcp_offer_after_seconds = 10
+    dhcp_offer_after_seconds = 1 # must be >0!!!
     dhcp_acknowledge_after_seconds = 10
     length_of_transaction = 40
 
-    network = '192.168.173.0'
-    broadcast_address = '255.255.255.255'
-    subnet_mask = '255.255.255.0'
-    router = None # list of ips
+    #network = '192.168.173.0'
+    #broadcast_address = '255.255.255.255'
+    #subnet_mask = '255.255.255.0'
+    router = '172.30.3.1'
     # 1 day is 86400
-    ip_address_lease_time = 300 # seconds
+    ip_address_lease_time = 1296000# seconds
     domain_name_server = None # list of ips
 
     host_file = 'hosts.csv'
 
     debug = lambda *args, **kw: None
+
+    def __init__(self, ip, subnet_mask):
+        self.ip = ip
+        self.subnet_mask = subnet_mask
+        self.network = network_from_ip_subnet(ip, subnet_mask)
 
     def load(self, file):
         with open(file) as f:
@@ -257,6 +280,13 @@ class DHCPServerConfiguration(object):
 
     def network_filter(self):
         return NETWORK(self.network, self.subnet_mask)
+
+def network_from_ip_subnet(ip, subnet_mask):
+    import socket
+    subnet_mask = struct.unpack('>I', socket.inet_aton(subnet_mask))[0]
+    ip = struct.unpack('>I', socket.inet_aton(ip))[0]
+    network = ip & subnet_mask
+    return socket.inet_ntoa(struct.pack('>I', network))
 
 def ip_addresses(network, subnet_mask):
     import socket, struct
@@ -406,12 +436,16 @@ class DHCPServer(object):
         self.configuration = configuration
         self.socket = socket(type = SOCK_DGRAM)
         self.socket.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
-        self.socket.bind(('', 67))
+        self.socket.bind(('', 67)) # Using '' instead to broadcast to all
         self.delay_worker = DelayWorker()
         self.closed = False
         self.transactions = collections.defaultdict(lambda: Transaction(self)) # id: transaction
         self.hosts = HostDatabase(self.configuration.host_file)
         self.time_started = time.time()
+        self.broadcast_socket = socket(type=SOCK_DGRAM)
+        self.broadcast_socket.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
+        self.broadcast_socket.setsockopt(SOL_SOCKET, SO_BROADCAST, 1)
+        self.broadcast_socket.bind((configuration.ip, 67))
 
     def close(self):
         self.socket.close()
@@ -429,6 +463,7 @@ class DHCPServer(object):
         for socket in reads:
             try:
                 packet = ReadBootProtocolPacket(*socket.recvfrom(4096))
+                # print(packet)
             except OSError:
                 # OSError: [WinError 10038] An operation was attempted on something that is not a socket
                 pass
@@ -453,6 +488,9 @@ class DHCPServer(object):
     def is_valid_client_address(self, address):
         if address is None:
             return False
+        #print(address)
+        #print(self.configuration.subnet_mask)
+        #print(self.configuration.network)
         a = address.split('.')
         s = self.configuration.subnet_mask.split('.')
         n = self.configuration.network.split('.')
@@ -494,22 +532,17 @@ class DHCPServer(object):
 
     @property
     def server_identifiers(self):
-        return get_host_ip_addresses()
+        return [self.configuration.ip]
 
     def broadcast(self, packet):
         self.configuration.debug('broadcasting:\n {}'.format(str(packet).replace('\n', '\n\t')))
-        for addr in self.server_identifiers:
-            broadcast_socket = socket(type = SOCK_DGRAM)
-            broadcast_socket.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
-            broadcast_socket.setsockopt(SOL_SOCKET, SO_BROADCAST, 1)
-            packet.server_identifier = addr
-            broadcast_socket.bind((addr, 67))
-            try:
-                data = packet.to_bytes()
-                broadcast_socket.sendto(data, ('255.255.255.255', 68))
-                broadcast_socket.sendto(data, (addr, 68))
-            finally:
-                broadcast_socket.close()
+        try:
+            data = packet.to_bytes()
+            self.broadcast_socket.sendto(data, ('255.255.255.255', 68))
+        except:
+            print('error broadcasting')
+            traceback.print_exc()
+
 
     def run(self):
         while not self.closed:
@@ -537,13 +570,23 @@ class DHCPServer(object):
     def get_current_hosts(self):
         return sorted_hosts(self.hosts.get(last_used = GREATER(self.time_started)))
 
-if __name__ == '__main__':
-    configuration = DHCPServerConfiguration()
-    configuration.debug = print
-    configuration.adjust_if_this_computer_is_a_router()
-    configuration.router #+= ['192.168.0.1']
-    configuration.ip_address_lease_time = 60
+"""
+Since the entry point of the DHCP + PXE server is via piman, we no longer need the click options in this class.
+The entry point for the dhcp code is the do_dhcp function, which will spin up a server with the given IP, subnet_mask,
+and file containing a mapping of MAC addresses to static IPs.
+"""
+def do_dhcp(ip, subnet_mask, mac_ip_file):
+    configuration = DHCPServerConfiguration(ip, subnet_mask)
+    configuration.host_file = mac_ip_file
+    #configuration.debug = print
+    #configuration.adjust_if_this_computer_is_a_router()
+    #configuration.router #+= ['192.168.0.1']
+    configuration.ip_address_lease_time = 1296000
     server = DHCPServer(configuration)
     for ip in server.configuration.all_ip_addresses():
         assert ip == server.configuration.network_filter()
+    print("DHCP server is running...")
     server.run()
+    
+if __name__ == '__main__':
+    do_dhcp()
