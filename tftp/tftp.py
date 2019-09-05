@@ -3,6 +3,9 @@
 from socket import AF_INET, SOCK_DGRAM, socket
 from struct import unpack, pack
 from threading import Thread
+from zipfile import ZipFile
+
+import os
 
 """
 This code is modified following Prof. Reed suggestion
@@ -32,6 +35,19 @@ class TFTPServer:
         self.data_dir = data_dir
         self.tftp_port = tftp_port
         self.connection_address = connection_address
+
+    def res_open(self, name):
+        zipfile = os.path.dirname(os.path.dirname(__file__))
+        fd = None
+        try:
+            with ZipFile(zipfile) as z:
+                fd = z.open("install/boot/" + name)
+        except KeyError:
+            pass # we'll try looking in the filesystem next
+        if not fd:
+            return open("{}/{}".format(self.data_dir, name), "rb")
+        return fd
+
 
     """
     Begins running the server thread
@@ -77,8 +93,8 @@ class TFTPServer:
 
                 try:
                     # opens the specified file in a read only binary form
-                    transfer_file = open(
-                        "{}/{}".format(self.data_dir, strings_in_RRQ[0].decode()), "rb"
+                    transfer_file = self.res_open(
+                        strings_in_RRQ[0].decode()
                     )
 
                     # block_number will remain an integer for file seeking purposes
@@ -120,8 +136,8 @@ class TFTPServer:
                         try:
                             # opens the specified file in a read only binary form
                             file_name = addr_dict[addr][0]
-                            transfer_file = open(
-                                "{}/{}".format(self.data_dir, file_name.decode()), "rb"
+                            transfer_file = self.res_open(
+                                file_name.decode()
                             )
 
                             # block_number will remain an integer for file seeking purposes
@@ -155,8 +171,8 @@ class TFTPServer:
                     elif addr_dict[addr][2] < 3:
                         try:
                             # opens the specified file in a read only binary form
-                            transfer_file = open(
-                                "{}/{}".format(self.data_dir, addr_dict[addr][0].decode()), "rb"
+                            transfer_file = self.res_open(
+                                addr_dict[addr][0].decode()
                             )
 
                             # block_number will remain an integer for file seeking purposes
