@@ -11,4 +11,5 @@ mkdir build/piman.app/install
 cp -r install/boot build/piman.app/install
 # we don't want crypto stuff since it has native code
 rm -r build/piman.app/Crypto*
+python3 config.py
 python3 -m zipapp build/piman.app 
