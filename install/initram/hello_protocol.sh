@@ -1,5 +1,5 @@
 #!/bin/busybox sh
-
+exec 2>&1
 # Send and recv are from skeleton code
 send() {
     echo "$1"
@@ -114,6 +114,7 @@ do
         # Mounts the OS on /new_root and exits
         mounting
         exit 0
+   ;;
     reinstall)
         mounting
         rm -rf /*
