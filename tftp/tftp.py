@@ -15,10 +15,11 @@ This code is modified following Prof. Reed suggestion
 The TFTPServer class encapsulates the methods required for running a simple TFTP server that handles only read requests
 The server is initialized with a data directory, a port, as well as a connection address
 
-The default data directory is the home directory
-The default port is 69 (note: sudo must be used if using port 69)
-The default connection address is that of the local machine.
+Data directory, port and connection address is specified in the configuration file
+(note: sudo must be used if using port 69)
 """
+
+
 class TFTPServer:
     RRQ_OPCODE = 1
     DATA_OPCODE = 3
@@ -31,11 +32,13 @@ class TFTPServer:
     # max data packet length in TFTP
     BUFFER_SIZE = 516
 
+    # ctor for setting configurable attributes
     def __init__(self, data_dir, tftp_port, connection_address):
         self.data_dir = data_dir
         self.tftp_port = tftp_port
         self.connection_address = connection_address
 
+    # opens install/boot in zipfile
     def res_open(self, name):
         zipfile = os.path.dirname(os.path.dirname(__file__))
         fd = None
@@ -43,176 +46,172 @@ class TFTPServer:
             with ZipFile(zipfile) as z:
                 fd = z.open("install/boot/" + name)
         except KeyError:
-            pass # we'll try looking in the filesystem next
+            pass  # we'll try looking in the filesystem next
         if not fd:
             return open("{}/{}".format(self.data_dir, name), "rb")
         return fd
 
-
     """
     Begins running the server thread
     """
+
     def start(self):
         self.server_socket = socket(AF_INET, SOCK_DGRAM)
         # We can specify a specific address when running the server (defaults to '')
-        print("connecting to {}:{}".format(self.connection_address, self.tftp_port))
+        print("connecting to {}:{}".format(
+            self.connection_address, self.tftp_port))
         self.server_socket.bind((self.connection_address, self.tftp_port))
-        print("serving files from {} on port {}".format(self.data_dir, self.tftp_port))
+        print("serving files from {} on port {}".format(
+            self.data_dir, self.tftp_port))
         self.tftp_thread = Thread(target=self.__process_requests, name="tftpd")
         self.tftp_thread.start()
 
     """
-    This code is responsible for handling requests (both valid and invalid) as well as ensuring data is transferred 
+    This code is responsible for handling requests (both valid and invalid) as well as ensuring data is transferred
     properly and reliably.
     """
+
     def __process_requests(self):
-        print("TFTP waiting for request")
-        addr_dict = dict()
         # this while loop keeps our server running also accounting for ensuring the initial
         # data packet is retrieved by the host
+        # accepts RRQ's for files and starts a thread to proccess it
+        print("TFTP waiting for request")
         while True:
+
             pkt, addr = self.server_socket.recvfrom(self.BUFFER_SIZE)
-            # the first two bytes of all TFTP packets is the opcode, so we can
-            # extract that here. need network-byte order hence the '!'.
-            [opcode] = unpack("!H", pkt[0:2])
-            if opcode == TFTPServer.RRQ_OPCODE:
-                # RRQ is a series of strings, the first two being the filename
-                # and mode but there may also be options. see RFC 2347.
-                #
-                # we skip the first 2 bytes (the opcode) and split on b'\0'
-                # since the strings are null terminated.
-                #
-                # because b'\0' is at the end of all strings split will always
-                # give us an extra empty string at the end, so skip it with [:-1]
-                strings_in_RRQ = pkt[2:].split(b"\0")[:-1]
-                print("got {} from {}".format(strings_in_RRQ, addr))
-                addr_dict[addr] = [strings_in_RRQ[0], 0, 0]
 
-                # data needed for our packet
-                transfer_opcode = pack("!H", TFTPServer.DATA_OPCODE)
+            t1 = Thread(
+                target=self.__create_thread_and_process_requests, args=(pkt, addr))
+            t1.daemon = True
+            t1.start()
+    """
+    This code is responsible for handling requests. It starts a new socket with an ephemeral port
+    for communication to the client. If no response is heard after 10 seconds, the socket is closed and function ends.
+    """
 
-                try:
-                    # opens the specified file in a read only binary form
-                    transfer_file = self.res_open(
-                        strings_in_RRQ[0].decode()
-                    )
+    def __create_thread_and_process_requests(self, pkt, addr):
 
-                    # block_number will remain an integer for file seeking purposes
-                    block_number = addr_dict[addr][1]
+        # initial block number and variable for filename
+        block_number = 0
+        filename = ''
 
-                    # navigate to the corresponding 512-byte window in the transfer file
-                    transfer_file.seek(512 * block_number)
+        # prepare the UDP socket
+        client_dedicated_sock = socket(AF_INET, SOCK_DGRAM)
+        # bind to 0 for an ephemeral port
+        client_dedicated_sock.bind((self.connection_address, 0))
+        # set timeout for the socket
+        client_dedicated_sock.settimeout(10)
+
+        # RRQ is a series of strings, the first two being the filename
+        # and mode but there may also be options. see RFC 2347.
+        #
+        # we skip the first 2 bytes (the opcode) and split on b'\0'
+        # since the strings are null terminated.
+        #
+        # because b'\0' is at the end of all strings split will always
+        # give us an extra empty string at the end, so skip it with [:-1]
+        strings_in_RRQ = pkt[2:].split(b"\0")[:-1]
+
+        print("got {} from {}".format(strings_in_RRQ, addr))
+
+        filename = strings_in_RRQ[0]
+
+        # opens the file once for the socket, opening multiple times causes tftp to be slow
+        try:
+            transfer_file = self.res_open(strings_in_RRQ[0].decode())
+
+            while True:
+
+                # the first two bytes of all TFTP packets is the opcode, so we can
+                # extract that here. the '!' is for big endian, and 'H' is to say it is an integer
+                [opcode] = unpack("!H", pkt[0:2])
+
+                if opcode == TFTPServer.RRQ_OPCODE:
+
+                    # set the opcode for the packet we are sending
+                    transfer_opcode = pack("!H", TFTPServer.DATA_OPCODE)
 
                     # read up to the appropriate 512 bytes of data
                     data = transfer_file.read(512)
 
+                    # if data is received increment block number, contruct the packet, and send it
                     if data:
                         block_number += 1
-                        addr_dict[addr][1] = block_number
+                        transfer_block_number = pack("!H", block_number)
+                        packet = transfer_opcode + transfer_block_number + data
+                        client_dedicated_sock.sendto(packet, addr)
 
-                        # the transfer block number is a binary string representation of the block number
+                # ACK received, so we can now read the next block, if it doesn't match resend the previous block of data
+                elif opcode == TFTPServer.ACK_OPCODE:
+
+                    [acked_block] = unpack("!H", pkt[2:4])
+
+                    # block number matches, the block sent was successfully received
+                    if acked_block == block_number:
+
+                        data = transfer_file.read(512)
+
+                        # if data read, increment block number, construct packet, and send it on the socket
+                        if data:
+                            block_number += 1
+                            transfer_block_number = pack("!H", block_number)
+                            packet = transfer_opcode + transfer_block_number + data
+                            client_dedicated_sock.sendto(packet, addr)
+
+                        # if no data was read, read returns b'', then EOF was reached and download complete
+                        else:
+                            print('download complete, closing socket')
+                            client_dedicated_sock.close()
+                            break
+
+                    # if the block number doesn't match, means data sent was not received
+                    # here you can just resend the data you already read because, no need for seek or another read
+                    # because you already read it and it was not received, doing seek or read would slow down tftp
+                    elif block_number != acked_block:
+
+                        # decrement block number
+                        block_number = block_number - 1
+
                         transfer_block_number = pack("!H", block_number)
 
-                        # construct a data packet
                         packet = transfer_opcode + transfer_block_number + data
 
-                        # send the initial data packet
-                        self.server_socket.sendto(packet, addr)
-                        
-                except FileNotFoundError:
-                    # send an error packet to the requesting host
-                    error_opcode = pack("!H", TFTPServer.ERROR_OPCODE)
-                    error_code = pack("!H", 17)
-                    error_message = b"No such file within the directory\0"
-                    packet = error_opcode + error_code + error_message    
-            elif opcode == TFTPServer.ACK_OPCODE:
-                # this loop begins to execute with the intention to send the rest of the data
-                # in the case that our file is of a size greater than 512 bytes
-                #while True:
-                # retrieve the ack information from the client
-                if addr in addr_dict:
-                    [acked_block] = unpack("!H", pkt[2:4])
-                    if acked_block == addr_dict[addr][1]:
-                        try:
-                            # opens the specified file in a read only binary form
-                            file_name = addr_dict[addr][0]
-                            transfer_file = self.res_open(
-                                file_name.decode()
-                            )
+                        client_dedicated_sock.sendto(packet, addr)
 
-                            # block_number will remain an integer for file seeking purposes
-                            block_number = addr_dict[addr][1]
-
-                            # navigate to the corresponding 512-byte window in the transfer file
-                            transfer_file.seek(512 * block_number)
-
-                            # read up to the appropriate 512 bytes of data
-                            data = transfer_file.read(512)
-
-                            if data:
-                                block_number += 1
-                                addr_dict[addr][1] = block_number
-
-                                # the transfer block number is a binary string representation of the block number
-                                transfer_block_number = pack("!H", block_number)
-
-                                # construct a data packet
-                                packet = transfer_opcode + transfer_block_number + data
-
-                                # send the initial data packet
-                                self.server_socket.sendto(packet, addr)
-                        except FileNotFoundError:
-                            # send an error packet to the requesting host
-                            error_opcode = pack("!H", TFTPServer.ERROR_OPCODE)
-                            error_code = pack("!H", 17)
-                            error_message = b"No such file within the directory\0"
-                            packet = error_opcode + error_code + error_message
-
-                    elif addr_dict[addr][2] < 3:
-                        try:
-                            # opens the specified file in a read only binary form
-                            transfer_file = self.res_open(
-                                addr_dict[addr][0].decode()
-                            )
-
-                            # block_number will remain an integer for file seeking purposes
-                            block_number = addr_dict[addr][1] - 1
-
-                            # navigate to the corresponding 512-byte window in the transfer file
-                            transfer_file.seek(512 * block_number)
-
-                            # read up to the appropriate 512 bytes of data
-                            data = transfer_file.read(512)
-
-                            if data:
-                                # the transfer block number is a binary string representation of the block number
-                                transfer_block_number = pack("!H", block_number)
-
-                                # construct a data packet
-                                packet = transfer_opcode + transfer_block_number + data
-
-                                # send the initial data packet
-                                self.server_socket.sendto(packet, addr)
-                        except FileNotFoundError:
-                            # send an error packet to the requesting host
-                            error_opcode = pack("!H", TFTPServer.ERROR_OPCODE)
-                            error_code = pack("!H", 17)
-                            error_message = b"No such file within the directory\0"
-                            packet = error_opcode + error_code + error_message
+                    else:
+                        # form an error packet and send it to the invalid TID
+                        error_opcode = pack("!H", TFTPServer.ERROR_OPCODE)
+                        error_code = pack("!H", 21)
+                        error_message = b"incorrect TID\0"
+                        packet = error_opcode + error_code + error_message
+                        client_dedicated_sock.sendto(packet, addr)
                 else:
                     # form an error packet and send it to the invalid TID
                     error_opcode = pack("!H", TFTPServer.ERROR_OPCODE)
-                    error_code = pack("!H", 21)
-                    error_message = b"incorrect TID\0"
+                    error_code = pack("!H", 20)
+                    error_message = b"illegal operation specified\0"
                     packet = error_opcode + error_code + error_message
-                    self.server_socket.sendto(packet, addr)
-            else:
-                # form an error packet and send it to the invalid TID
-                error_opcode = pack("!H", TFTPServer.ERROR_OPCODE)
-                error_code = pack("!H", 20)
-                error_message = b"illegal operation specified\0"
-                packet = error_opcode + error_code + error_message
-                self.server_socket.sendto(packet, addr)
+                    client_dedicated_sock.sendto(packet, addr)
+
+                # listen for a client response for 10 seconds
+                # close everything and terminate if no response
+                try:
+                    pkt, addr = client_dedicated_sock.recvfrom(
+                        self.BUFFER_SIZE)
+
+                except:
+                    print("Socket Timed Out")
+                    client_dedicated_sock.close()
+                    print('closed socket')
+                    break
+        except FileNotFoundError:
+            # send an error packet to the requesting host
+            error_opcode = pack("!H", TFTPServer.ERROR_OPCODE)
+            error_code = pack("!H", 17)
+            error_message = b"No such file within the directory\0"
+            packet = error_opcode + error_code + error_message
+            client_dedicated_sock.sendto(packet, addr)
+            client_dedicated_sock.close()
 
     def join(self):
         self.tftp_thread.join()
@@ -238,6 +237,8 @@ class TFTPServer:
     metavar="UDP_listening_address",
     help="the address to listen on for request",
 )"""
+
+
 def do_tftpd(data_dir, connection_address, tftp_port):
     """ this is a simple TFTP server that will listen on the specified
         port and serve data rooted at the specified data. only read
