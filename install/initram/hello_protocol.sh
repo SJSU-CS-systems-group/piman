@@ -118,7 +118,7 @@ do
         ;;
     reinstall)
         mounting
-        sudo rm -rf /*
+        rm -rf /*
         unmount
         send "IS_UNINSTALLED" 
         break
