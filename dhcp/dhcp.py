@@ -36,7 +36,6 @@ class WriteBootProtocolPacket(object):
     
     vendor_class_identifier = "PXEClient"
     boot_file_name = "bootcode.bin"
-    router = '172.30.3.1'
     client_mac_address = None
     magic_cookie = '99.130.83.99'
 
@@ -44,6 +43,7 @@ class WriteBootProtocolPacket(object):
     
     def __init__(self, configuration):
         self.tftp_server_name = configuration.ip
+        self.router = configuration.router
         for i in range(256):
             names = ['option_{}'.format(i)]
             if i < len(options) and hasattr(configuration, options[i][0]):
