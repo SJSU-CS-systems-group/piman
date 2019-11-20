@@ -19,7 +19,7 @@ class Pimon(Resource):
         temperature = psutil.sensors_temperatures().get('cpu-thermal')[0][1]
 
         event = {
-            "time": time.time(),
+            "time": time.ctime(),
             "cpu_percent":    cpu_percent,
             "memory_percent": memory_percent,
             "disk_percent":   disk_percent,
