@@ -36,13 +36,14 @@ def alert(data):
 
 
 def pretty_stats(ip, event):
-    return "---- From {} ---- \n Time: {} \n CPU load: {} \n RAM usage: {} \n Disk usage: {} \n # of PIDs: {} \n".format(
+    return "---- From {} ---- \n Time: {} \n CPU load: {} \n RAM usage: {} \n Disk usage: {} \n # of PIDs: {} \n Temperature: {} Celsius \n".format(
             ip,
             event['time'], 
             event['cpu_percent'],
             event['memory_percent'],
             event['disk_percent'],
             event['num_pids'],
+            event['temp'],
         )
 
 
@@ -61,7 +62,7 @@ def check_response(response_dict, pi):
         alert("Disk Usage beyond threshold on pi@{}".format(pi))
     if response_dict['num_pids'] > int(monitor_config['DEFAULT']['pids_threshold']):
         alert("Number of PID's beyond threshold on pi@{}".format(pi))
-
+# add temparature check
 
 def print_to_file(data):
     with open(log_path, "a") as f:
