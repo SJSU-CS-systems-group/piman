@@ -204,10 +204,10 @@ class Transaction(object):
         offer.client_ip_address = discovery.client_ip_address or '0.0.0.0'
         offer.bootp_flags = discovery.bootp_flags
         offer.dhcp_message_type = 'DHCPOFFER'
-        
         offer.client_identifier = mac
-        #print(offer)
-        self.server.broadcast(offer)
+        offer.ip_address_lease_time = self.configuration.ip_address_lease_time
+        pkt = construct_packet(mac, self.configuration.ip, ip, offer)
+        self.server.unicast(pkt)
     
     def received_dhcp_request(self, request):
         if self.is_done(): return 
@@ -227,7 +227,11 @@ class Transaction(object):
         ack.client_ip_address = request.client_ip_address or '0.0.0.0'
         ack.your_ip_address = self.server.get_ip_address(request)
         ack.dhcp_message_type = 'DHCPACK'
-        self.server.broadcast(ack)
+        ack.server_identifier = self.server.configuration.ip
+        ack.ip_address_lease_time = self.configuration.ip_address_lease_time
+        pkt = construct_packet(mac, self.server.configuration.ip,
+                request.requested_ip_address or request.client_ip_address, ack)
+        self.server.unicast(pkt)
 
     def received_dhcp_inform(self, inform):
         self.close()
