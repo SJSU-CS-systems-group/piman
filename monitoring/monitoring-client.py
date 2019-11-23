@@ -36,7 +36,7 @@ def alert(data):
 
 
 def pretty_stats(ip, event):
-    return "---- From {} ---- \n Time: {} \n CPU load: {} \n RAM usage: {} \n Disk usage: {} \n # of PIDs: {} \n Temperature: {} Celsius \n".format(
+    return "---- From {} ---- \n Time: {} \n CPU load: {} \n RAM usage: {} \n Disk usage: {} \n # of PIDs: {} \n Temperature: {} F \n".format(
             ip,
             event['time'], 
             event['cpu_percent'],
@@ -54,7 +54,7 @@ def get_status(pi_ip):
 
 
 def check_response(response_dict, pi):
-    if response_dict['cpu_percent'] > float(monitor_config['DEFAULT']['cpu_threshold']):
+    if response_dict['cpu_percent'] > float(config['DEFAULT']['cpu_threshold']):
         alert("CPU beyond threshold on pi@{}".format(pi))
     if response_dict['memory_percent'] > float(monitor_config['DEFAULT']['mem_threshold']):
         alert("Memory beyond threshold on pi@{}".format(pi))
@@ -62,7 +62,8 @@ def check_response(response_dict, pi):
         alert("Disk Usage beyond threshold on pi@{}".format(pi))
     if response_dict['num_pids'] > int(monitor_config['DEFAULT']['pids_threshold']):
         alert("Number of PID's beyond threshold on pi@{}".format(pi))
-# add temparature check
+    if response_dict['temp'] > float(config['DEFAULT']['temperature_threshold']):
+        alert("Temperature beyond threshold on pi@{}".format(pi))
 
 def print_to_file(data):
     with open(log_path, "a") as f:
