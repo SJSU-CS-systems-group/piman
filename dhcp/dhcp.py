@@ -9,9 +9,6 @@ from random import randrange
 import uuid
 from .listener import *
 
-def get_host_ip_addresses():
-    return gethostbyname_ex(gethostname())[2]
-
 """
 This class contains specified attributes which will be populated, these attributes are associated with
 the required options for our DHCP+PXE server. 
@@ -48,9 +45,9 @@ class WriteBootProtocolPacket(object):
             names = ['option_{}'.format(i)]
             if i < len(options) and hasattr(configuration, options[i][0]):
                 names.append(options[i][0])
-            for name in names:
-                if hasattr(configuration, name):
-                    setattr(self, name, getattr(configuration, name))
+        for name in names:
+            if hasattr(configuration, name):
+                setattr(self, name, getattr(configuration, name))
 
     def to_bytes(self):
         result = bytearray(236)
@@ -247,12 +244,8 @@ class DHCPServerConfiguration(object):
     #network = '192.168.173.0'
     #broadcast_address = '255.255.255.255'
     #subnet_mask = '255.255.255.0'
-    router = '172.30.3.1'
-    # 1 day is 86400
-    ip_address_lease_time = 1296000# seconds
+    #router = '172.30.3.1'
     domain_name_server = None # list of ips
-
-    host_file = 'hosts.csv'
 
     debug = lambda *args, **kw: None
 
@@ -288,22 +281,6 @@ class DHCPServerConfiguration(object):
 
     def network_filter(self):
         return NETWORK(self.network, self.subnet_mask)
-
-def network_from_ip_subnet(ip, subnet_mask):
-    import socket
-    subnet_mask = struct.unpack('>I', socket.inet_aton(subnet_mask))[0]
-    ip = struct.unpack('>I', socket.inet_aton(ip))[0]
-    network = ip & subnet_mask
-    return socket.inet_ntoa(struct.pack('>I', network))
-
-def ip_addresses(network, subnet_mask):
-    import socket, struct
-    subnet_mask = struct.unpack('>I', socket.inet_aton(subnet_mask))[0]
-    network = struct.unpack('>I', socket.inet_aton(network))[0]
-    network = network & subnet_mask
-    start = network + 1
-    end = (network | (~subnet_mask & 0xffffffff))
-    return (socket.inet_ntoa(struct.pack('>I', i)) for i in range(start, end))
 
 class ALL(object):
     def __eq__(self, other):
@@ -431,11 +408,6 @@ class HostDatabase(object):
         self.delete(host)
         self.add(host)
         
-def sorted_hosts(hosts):
-    hosts = list(hosts)
-    hosts.sort(key = lambda host: (host.hostname.lower(), host.mac.lower(), host.ip.lower()))
-    return hosts
-
 class DHCPServer(object):
 
     def __init__(self, configuration = None):
@@ -678,7 +650,6 @@ def do_dhcp(hosts_file, subnet_mask, ip, lease_time, net_inter):
     #configuration.debug = print
     #configuration.adjust_if_this_computer_is_a_router()
     #configuration.router #+= ['192.168.0.1']
-    configuration.ip_address_lease_time = 1296000
     server = DHCPServer(configuration)
     for ip in server.configuration.all_ip_addresses():
         assert ip == server.configuration.network_filter()
