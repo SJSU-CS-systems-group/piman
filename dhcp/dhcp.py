@@ -581,24 +581,25 @@ def sorted_hosts(hosts):
     hosts.sort(key = lambda host: (host.hostname.lower(), host.mac.lower(), host.ip.lower()))
     return hosts
 
-UDP   = bytearray(b'\x00\x43\x00\x44\x00\x00\x00\x00')
-IP    = bytearray(b'\x45\x00\x00\x00\x00\x00\x40\x00\x40\x11\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
-ETHER = bytearray(b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x08\x00')
+# 'Empty' packet data. Filled in when DHCP sends unicast responses.
+UDP   = b'\x00\x43\x00\x44\x00\x00\x00\x00'
+IP    = b'\x45\x00\x00\x00\x00\x00\x40\x00\x40\x11\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
+ETHER = b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x08\x00'
 
-# TODO: change values in in this function to constants.
 def construct_packet(dmac, sip, dip, bootp):
     # BOOTP Payload
     bootp = bootp.to_bytes()
-    udp   = UDP
-    ip    = IP
-    ether = ETHER
-    
+    udp   = bytearray(UDP)
+    ip    = bytearray(IP)
+    ether = bytearray(ETHER)
+
     # UDP Packet
-    udp[4:6] = (len(bootp) + 8).to_bytes(2, 'big')
+    udp_length = len(bootp) + 8
+    udp[4:6] = (udp_length).to_bytes(2, 'big')
     #udp[6:7] = UDP checksum
 
     # IP Packet
-    ip[ 2: 4] = (len(udp) + 20).to_bytes(2, 'big')
+    ip[ 2: 4] = (udp_length + 20).to_bytes(2, 'big')
     ip[ 4: 6] = (randrange(0, 65535)).to_bytes(2, 'big')
     ip[12:16] = inet_aton(sip)
     ip[16:20] = inet_aton(dip)
@@ -606,9 +607,9 @@ def construct_packet(dmac, sip, dip, bootp):
 
     # Ethernet Frame
     ether[0: 6] = macpack(dmac)
-    ether[6:13] = (uuid.getnode()).to_bytes(6, 'big')
+    ether[6:12] = (uuid.getnode()).to_bytes(6, 'big')
 
-    packet = b''.join([ETHERNET, IP, UDP, BOOTP])
+    packet = b''.join([bytes(ether), bytes(ip), bytes(udp), bootp])
     return packet
 
 # https://github.com/mdelatorre/checksum/blob/master/ichecksum.py
