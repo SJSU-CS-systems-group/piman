@@ -421,9 +421,9 @@ class DHCPServer(object):
         self.closed = False
         self.transactions = collections.defaultdict(lambda: Transaction(self)) # id: transaction
         self.hosts = HostDatabase(self.configuration.host_file)
-        self.time_started = time.time()
         self.raw_sock = socket(AF_PACKET, SOCK_RAW)
-        self.raw_sock.bind((self.configuration.net_inter_name, 67))
+        self.raw_sock.bind((self.configuration.net_inter_name, 0)) # ETH_P_ALL = 0
+        self.time_started = time.time()
 
     def close(self):
         self.socket.close()
