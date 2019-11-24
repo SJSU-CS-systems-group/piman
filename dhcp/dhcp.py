@@ -581,47 +581,32 @@ def sorted_hosts(hosts):
     hosts.sort(key = lambda host: (host.hostname.lower(), host.mac.lower(), host.ip.lower()))
     return hosts
 
+UDP   = bytearray(b'\x00\x43\x00\x44\x00\x00\x00\x00')
+IP    = bytearray(b'\x45\x00\x00\x00\x00\x00\x40\x00\x40\x11\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
+ETHER = bytearray(b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x08\x00')
+
+# TODO: change values in in this function to constants.
 def construct_packet(dmac, sip, dip, bootp):
     # BOOTP Payload
-    BOOTP = bootp.to_bytes()
-    bootp_l = len(BOOTP)
+    bootp = bootp.to_bytes()
+    udp   = UDP
+    ip    = IP
+    ether = ETHER
     
     # UDP Packet
-    udp_l = bootp_l + 8
-    UDP = b''.join([
-        b'\x00\x43', # source port
-        b'\x00\x44', # destination port
-        (udp_l).to_bytes(2, 'big'), # length
-        b'\x00\x00' # checksum
-        ])
+    udp[4:6] = (len(bootp) + 8).to_bytes(2, 'big')
+    #udp[6:7] = UDP checksum
 
     # IP Packet
-    rand = randrange(0, 65535)
-    ident = (rand).to_bytes(2, 'big')
-    ip_len = udp_l + 20
-    IP = b''.join([
-        b'\x45', # version and header length
-        b'\x00', # differentiated services
-        (ip_len).to_bytes(2, 'big'), # total length
-        ident, # Identification
-        b'\x40\x00', # Flags
-        b'\x40', # TTL
-        b'\x11', # payload protocol
-        b'\x00\x00', # header checksum
-        inet_aton(sip), # source IP
-        inet_aton(dip) # destination IP
-        ])
-    IP = bytearray(IP)
-    IP[10:12] = IP_checksum(IP)
-    IP = bytes(IP)
+    ip[ 2: 4] = (len(udp) + 20).to_bytes(2, 'big')
+    ip[ 4: 6] = (randrange(0, 65535)).to_bytes(2, 'big')
+    ip[12:16] = inet_aton(sip)
+    ip[16:20] = inet_aton(dip)
+    ip[10:12] = IP_checksum(ip)
 
     # Ethernet Frame
-    smac = (uuid.getnode()).to_bytes(6, 'big')
-    ETHERNET = b''.join([
-        macpack(dmac), # destination mac
-        smac, # source mac
-        b'\x08\x00' # type
-        ])
+    ether[0: 6] = macpack(dmac)
+    ether[6:13] = (uuid.getnode()).to_bytes(6, 'big')
 
     packet = b''.join([ETHERNET, IP, UDP, BOOTP])
     return packet
