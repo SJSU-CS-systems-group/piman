@@ -631,7 +631,7 @@ def IP_checksum(data):
 def do_dhcp(hosts_file, subnet_mask, ip, lease_time, net_inter):
     configuration = DHCPServerConfiguration(ip, subnet_mask, hosts_file,
             lease_time, net_inter)
-    configuration.tftp_server_name = [ip]
+    configuration.tftp_server_name = ip
     #configuration.debug = print
     #configuration.adjust_if_this_computer_is_a_router()
     #configuration.router #+= ['192.168.0.1']
