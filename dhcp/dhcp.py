@@ -5,7 +5,8 @@ import queue
 import collections
 import traceback
 import socket
-
+from random import randrange
+import uuid
 from .listener import *
 
 def get_host_ip_addresses():
@@ -35,7 +36,6 @@ class WriteBootProtocolPacket(object):
     
     vendor_class_identifier = "PXEClient"
     boot_file_name = "bootcode.bin"
-    router = '172.30.3.1'
     client_mac_address = None
     magic_cookie = '99.130.83.99'
 
@@ -43,6 +43,7 @@ class WriteBootProtocolPacket(object):
     
     def __init__(self, configuration):
         self.tftp_server_name = configuration.ip
+        self.router = configuration.router
         for i in range(256):
             names = ['option_{}'.format(i)]
             if i < len(options) and hasattr(configuration, options[i][0]):
@@ -204,10 +205,10 @@ class Transaction(object):
         offer.client_ip_address = discovery.client_ip_address or '0.0.0.0'
         offer.bootp_flags = discovery.bootp_flags
         offer.dhcp_message_type = 'DHCPOFFER'
-        
         offer.client_identifier = mac
-        #print(offer)
-        self.server.broadcast(offer)
+        offer.ip_address_lease_time = self.configuration.ip_address_lease_time
+        pkt = construct_packet(mac, self.configuration.ip, ip, offer)
+        self.server.unicast(pkt)
     
     def received_dhcp_request(self, request):
         if self.is_done(): return 
@@ -227,7 +228,11 @@ class Transaction(object):
         ack.client_ip_address = request.client_ip_address or '0.0.0.0'
         ack.your_ip_address = self.server.get_ip_address(request)
         ack.dhcp_message_type = 'DHCPACK'
-        self.server.broadcast(ack)
+        ack.server_identifier = self.server.configuration.ip
+        ack.ip_address_lease_time = self.configuration.ip_address_lease_time
+        pkt = construct_packet(mac, self.server.configuration.ip,
+                request.requested_ip_address or request.client_ip_address, ack)
+        self.server.unicast(pkt)
 
     def received_dhcp_inform(self, inform):
         self.close()
@@ -251,9 +256,12 @@ class DHCPServerConfiguration(object):
 
     debug = lambda *args, **kw: None
 
-    def __init__(self, ip, subnet_mask):
+    def __init__(self, ip, subnet_mask, hosts_file, lease_time, net_inter):
         self.ip = ip
         self.subnet_mask = subnet_mask
+        self.host_file = hosts_file
+        self.ip_address_lease_time = lease_time
+        self.net_inter_name = net_inter
         self.network = network_from_ip_subnet(ip, subnet_mask)
 
     def load(self, file):
@@ -442,10 +450,8 @@ class DHCPServer(object):
         self.transactions = collections.defaultdict(lambda: Transaction(self)) # id: transaction
         self.hosts = HostDatabase(self.configuration.host_file)
         self.time_started = time.time()
-        self.broadcast_socket = socket(type=SOCK_DGRAM)
-        self.broadcast_socket.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
-        self.broadcast_socket.setsockopt(SOL_SOCKET, SO_BROADCAST, 1)
-        self.broadcast_socket.bind((configuration.ip, 67))
+        self.raw_sock = socket(AF_PACKET, SOCK_RAW)
+        self.raw_sock.bind((self.configuration.net_inter_name, 67))
 
     def close(self):
         self.socket.close()
@@ -543,6 +549,12 @@ class DHCPServer(object):
             print('error broadcasting')
             traceback.print_exc()
 
+    def unicast(self, packet):
+        try:
+            self.raw_sock.send(packet)
+        except:
+            print('DCHP - error unicasting')
+            traceback.print_exc()
 
     def run(self):
         while not self.closed:
@@ -570,14 +582,99 @@ class DHCPServer(object):
     def get_current_hosts(self):
         return sorted_hosts(self.hosts.get(last_used = GREATER(self.time_started)))
 
-"""
-Since the entry point of the DHCP + PXE server is via piman, we no longer need the click options in this class.
-The entry point for the dhcp code is the do_dhcp function, which will spin up a server with the given IP, subnet_mask,
-and file containing a mapping of MAC addresses to static IPs.
-"""
-def do_dhcp(ip, subnet_mask, mac_ip_file):
-    configuration = DHCPServerConfiguration(ip, subnet_mask)
-    configuration.host_file = mac_ip_file
+# Produces a list of inet addresses associated with the local host.
+def get_host_ip_addresses():
+    return gethostbyname_ex(gethostname())[2]
+
+# Produces the subnet address from an inet address and a subnet mask.
+def network_from_ip_subnet(ip, subnet_mask):
+    import socket
+    subnet_mask = struct.unpack('>I', socket.inet_aton(subnet_mask))[0]
+    ip = struct.unpack('>I', socket.inet_aton(ip))[0]
+    network = ip & subnet_mask
+    return socket.inet_ntoa(struct.pack('>I', network))
+
+# Produces an iterator containing all the host inet addresses on a subnet.
+def ip_addresses(network, subnet_mask):
+    import socket, struct
+    subnet_mask = struct.unpack('>I', socket.inet_aton(subnet_mask))[0]
+    network = struct.unpack('>I', socket.inet_aton(network))[0]
+    network = network & subnet_mask
+    start = network + 1
+    end = (network | (~subnet_mask & 0xffffffff)) # ???
+    return (socket.inet_ntoa(struct.pack('>I', i)) for i in range(start, end))
+
+def sorted_hosts(hosts):
+    hosts = list(hosts)
+    hosts.sort(key = lambda host: (host.hostname.lower(), host.mac.lower(), host.ip.lower()))
+    return hosts
+
+def construct_packet(dmac, sip, dip, bootp):
+    # BOOTP Payload
+    BOOTP = bootp.to_bytes()
+    bootp_l = len(BOOTP)
+    
+    # UDP Packet
+    udp_l = bootp_l + 8
+    UDP = b''.join([
+        b'\x00\x43', # source port
+        b'\x00\x44', # destination port
+        (udp_l).to_bytes(2, 'big'), # length
+        b'\x00\x00' # checksum
+        ])
+
+    # IP Packet
+    rand = randrange(0, 65535)
+    ident = (rand).to_bytes(2, 'big')
+    ip_len = udp_l + 20
+    IP = b''.join([
+        b'\x45', # version and header length
+        b'\x00', # differentiated services
+        (ip_len).to_bytes(2, 'big'), # total length
+        ident, # Identification
+        b'\x40\x00', # Flags
+        b'\x40', # TTL
+        b'\x11', # payload protocol
+        b'\x00\x00', # header checksum
+        inet_aton(sip), # source IP
+        inet_aton(dip) # destination IP
+        ])
+    IP = bytearray(IP)
+    IP[10:12] = IP_checksum(IP)
+    IP = bytes(IP)
+
+    # Ethernet Frame
+    smac = (uuid.getnode()).to_bytes(6, 'big')
+    ETHERNET = b''.join([
+        macpack(dmac), # destination mac
+        smac, # source mac
+        b'\x08\x00' # type
+        ])
+
+    packet = b''.join([ETHERNET, IP, UDP, BOOTP])
+    return packet
+
+# https://github.com/mdelatorre/checksum/blob/master/ichecksum.py
+def IP_checksum(data):
+    sum = 0
+    for i in range(0,len(data),2):
+        if i + 1 >= len(data):
+            sum += data[i] & 0xFF
+        else:
+            w = ((data[i] << 8) & 0xFF00) + (data[i+1] & 0xFF)
+            sum += w
+
+    while (sum >> 16) > 0:
+        sum = (sum & 0xFFFF) + (sum >> 16)
+
+    sum = ~sum
+    sum = sum & 0xFFFF
+
+    return (sum).to_bytes(2, 'big') 
+
+def do_dhcp(hosts_file, subnet_mask, ip, lease_time, net_inter):
+    configuration = DHCPServerConfiguration(ip, subnet_mask, hosts_file,
+            lease_time, net_inter)
     #configuration.debug = print
     #configuration.adjust_if_this_computer_is_a_router()
     #configuration.router #+= ['192.168.0.1']
