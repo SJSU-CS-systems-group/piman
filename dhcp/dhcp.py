@@ -38,16 +38,14 @@ class WriteBootProtocolPacket(object):
 
     parameter_order = []
     
+    # Adds new attributes to the WriteBootProtocolPacket object for
+    # each option that is present in the DHCP server configuration.
+    # These attributes are used when constructing the BOOTP packet.
     def __init__(self, configuration):
-        self.tftp_server_name = configuration.ip
-        self.router = configuration.router
-        for i in range(256):
-            names = ['option_{}'.format(i)]
-            if i < len(options) and hasattr(configuration, options[i][0]):
-                names.append(options[i][0])
-        for name in names:
-            if hasattr(configuration, name):
-                setattr(self, name, getattr(configuration, name))
+        for i in range(len(options)):
+            option_name = options[i][0]
+            if hasattr(configuration, option_name):
+                setattr(self, option_name, getattr(configuration, option_name))
 
     def to_bytes(self):
         result = bytearray(236)
@@ -633,6 +631,7 @@ def IP_checksum(data):
 def do_dhcp(hosts_file, subnet_mask, ip, lease_time, net_inter):
     configuration = DHCPServerConfiguration(ip, subnet_mask, hosts_file,
             lease_time, net_inter)
+    configuration.tftp_server_name = [ip]
     #configuration.debug = print
     #configuration.adjust_if_this_computer_is_a_router()
     #configuration.router #+= ['192.168.0.1']
