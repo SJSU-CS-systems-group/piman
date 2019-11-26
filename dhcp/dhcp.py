@@ -42,8 +42,10 @@ class WriteBootProtocolPacket(object):
     # each option that is present in the DHCP server configuration.
     # These attributes are used when constructing the BOOTP packet.
     def __init__(self, configuration):
-        for i in range(len(options)):
-            option_name = options[i][0]
+        for i in range(256):
+            option_name = 'option_{}'.format(i)
+            if i < len(options) and hasattr(configuration, options[i][0]):
+                option_name = options[i][0]
             if hasattr(configuration, option_name):
                 setattr(self, option_name, getattr(configuration, option_name))
 
