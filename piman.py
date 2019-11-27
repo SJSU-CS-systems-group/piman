@@ -1,4 +1,5 @@
 # import click
+
 from threading import Thread
 from sys import argv
 
@@ -6,15 +7,50 @@ from dhcp import dhcp
 from tcp import tcp
 from tftp import tftp
 from utility import power_cycle
+from parse_config import config
+
+
+'''
+piman.py
+
+Attributes:
+-----
+data_dir : str
+    the directory of files needed for pis to boot
+tftp_port : int
+    tftp use udp port 69 to establish network connection
+tcp_port : int
+    tcp port number for tcp to establish network connection
+ip : str
+    network ip address of pis and ip address of the router
+subnet_mask : str
+    subnet mask for the ip address of pis
+switch_address : str
+    ip address of the switch that connect pis
+mac_ip_file : str
+    address of the file that save the mac address of pis and its ip address
+    
+Methods
+-----
+server()
+    Start tftp, dhcp, tcp connection between server and pis
+restart(switch_address, port)
+    to restart the specific pi
+reinstall(switch_address, port)
+    to reinstall a specific pi
+exit_piman()
+    to exit piman
+    
+'''
 
 data_dir = "./install/boot"
 tftp_port = 69
 tcp_port = 3333
-ip = "172.30.3.1"
-subnet_mask = "255.255.255.0"
+ip = config['server_address']
+subnet_mask = config['subnet_mask']
 mac_ip_file = "hosts.csv"
 
-def server(): 
+def server():
     tftp_thread = Thread(target=tftp.do_tftpd, args=[data_dir, ip, tftp_port], name="tftpd")
     tftp_thread.start()
 
@@ -29,16 +65,16 @@ def server():
     tcp_thread.join()
 
 
-def restart(ports):
+def restart(switch_address, ports):
     for port in ports:
-        power_cycle.power_cycle(port)
+        power_cycle.power_cycle(switch_address, port)
 
 
-def reinstall(port):
+def reinstall(switch_address, port):
     with open("/tcp/reinstall.txt", "w") as f:
-        f.write("172.30.3.{}".format(port))
-    
-    power_cycle.power_cycle(port)
+        network_addr = ip[:-1]
+        f.write(network_addr+str(port))
+    power_cycle.power_cycle(switch_address, port)
 
 
 def exit_piman():
@@ -52,20 +88,15 @@ if __name__ == "__main__":
     print(args)
 
     if len(argv) < 2:
-        power_cycle.power_cycle(10)
-        server()
-        exit()
+        exit_piman()
 
     if argv[1] == "server":
         server()
     elif argv[1] == "restart":
         if len(argv) < 3:
             exit_piman()
-        restart(argv[2:])
+        restart(argv[2], argv[3:])
     elif argv[1] == "reinstall":
         if len(argv) < 3:
             exit_piman()
-        reinstall(argv[2:])
-    else: 
-        power_cycle.power_cycle(10)
-        server()
+        reinstall(argv[2], argv[3])

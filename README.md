@@ -1,8 +1,6 @@
-![Team Ice Logo](assets/img/team-ice.png)
+# Piman
 
-This repository will contain the project work done by the members of Team Ice throughout the course of the Fall 2018 semester in CS 158B.
----
-## Piman 
+## Raspberry Pi network management software  
 
 Piman has multiple different functionalities 
 
@@ -14,22 +12,70 @@ Piman has multiple different functionalities
 
 * Restart - To restart a set of pis, you can run the following command:
 
-    `python3 piman.py restart [list of pi_numbers]`
+    `python3 piman.py restart <switch number> [list of pi_numbers]`
 
     Example: 
 
-    `python3 piman.py restart 2 3 4` -> restarts pi 2, 3, and 4. 
+    `python3 piman.py restart 172.30.4.254 2 3 4` -> restarts pi 2, 3, and 4 for the switch 172.30.4.254 
 
 * Reinstall - To reinstall a set of pis, you can run the following command:
 
-    `python3 piman.py reinstall [list of pi_numbers]`
+    `python3 piman.py reinstall <switch number> [pi_number]`
 
     Example: 
 
-    `python3 piman.py reinstall 2 3 4` -> reinstalls pi 2, 3, and 4. 
+    `python3 piman.py reinstall 172.30.4.254 2` -> reinstalls pi 2 for the switch 172.30.4.254
 
-    **Note**: This functionality is not complete yet, it will require some bug fixes in the TCP and Hello Protocol. 
+### Set up your configuration
 
+To configure piman, create a YAML file with the following format:
+
+```
+private_number:
+server_address:
+subnet_mask:
+switch_count:
+switches:
+  - swtich_0_address:
+    pi_addresses:
+      -
+      -
+      -
+  - swtich_1_address:
+    pi_addresses:
+      -
+      -
+  .
+  .
+  . 
+```
+
+For example:
+```
+private_number: 4
+server_address: 172.30.4.1
+subnet_mask: 255.255.255.0
+switch_count: 2
+switches:
+  - swtich_0_address: 172.30.4.254
+    pi_addresses:
+      - 172.30.4.13
+      - 172.30.4.14
+      - 172.30.4.15
+      - 172.30.4.16
+      - 172.30.4.17
+      - 172.30.4.18
+      - 172.30.4.19
+      - 172.30.4.20
+  - swtich_1_address: 172.30.4.128
+    pi_addresses:
+      - 172.30.4.1
+      - 172.30.4.2
+      - 172.30.4.3
+      - 172.30.4.4
+      - 172.30.4.5
+      - 172.30.4.6
+```
 ### DHCP Server
 
 The DHCP server utilized for this project is a very lightweight, barebone version of [this DHCP server](https://github.com/niccokunzmann/python_dhcp_server). To manually assign IPs to known MAC addresses, you can modify the `hosts.csv` file located in the root of the main directory. The Pis will send a DHCP packet to the manager which in then responds with an IP and the location of the TFTP server. 
