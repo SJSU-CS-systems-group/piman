@@ -140,6 +140,8 @@ chmod -x grafana.sh
 
 Finally, add the ```grafana.service``` file or code next to the ```monitoring.service``` file you created for monitoring and run the service. If all paths are correct, the service should run.
 
+#### Note: Make sure to update paths in case you are running these files from your own directories
+
 #### Now your VM is ready to send the monitoring data to Grafana
 
 ### Running Dashboard
