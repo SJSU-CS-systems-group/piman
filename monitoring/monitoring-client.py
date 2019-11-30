@@ -7,13 +7,22 @@ import time
 import requests
 import configparser
 from sys import argv
+import sys
+sys.path.append(".")
+from parse_config import config
 
-config = configparser.ConfigParser()
+ips = []
+
+for list in config['switches']:
+    for addr in list['pi_addresses']:
+        ips.append(addr)
+
+monitor_config = configparser.ConfigParser()
 log_path = ""
 
 def alert(data):
     print_to_file(data)
-    url = config['DEFAULT']['slack']
+    url = monitor_config['DEFAULT']['slack']
     headers = {'Content-type': 'application/json'}
     try:
         r = requests.post(
@@ -44,13 +53,13 @@ def get_status(pi_ip):
 
 
 def check_response(response_dict, pi):
-    if response_dict['cpu_percent'] > float(config['DEFAULT']['cpu_threshold']):
+    if response_dict['cpu_percent'] > float(monitor_config['DEFAULT']['cpu_threshold']):
         alert("CPU beyond threshold on pi@{}".format(pi))
-    if response_dict['memory_percent'] > float(config['DEFAULT']['mem_threshold']):
+    if response_dict['memory_percent'] > float(monitor_config['DEFAULT']['mem_threshold']):
         alert("Memory beyond threshold on pi@{}".format(pi))
-    if response_dict['disk_percent'] > float(config['DEFAULT']['disk_threshold']):
+    if response_dict['disk_percent'] > float(monitor_config['DEFAULT']['disk_threshold']):
         alert("Disk Usage beyond threshold on pi@{}".format(pi))
-    if response_dict['num_pids'] > int(config['DEFAULT']['pids_threshold']):
+    if response_dict['num_pids'] > int(monitor_config['DEFAULT']['pids_threshold']):
         alert("Number of PID's beyond threshold on pi@{}".format(pi))
 
 
@@ -60,12 +69,11 @@ def print_to_file(data):
 
 
 def _main():
-    timeout = int(config['DEFAULT']['timeout'])
+    timeout = int(monitor_config['DEFAULT']['timeout'])
 
     # Main loop, polls the 9 pis then waits
     while True:
-        for i in range(2,11):
-            ip = "172.30.3.{}".format(i)
+        for ip in ips:
             try:
                 print_to_file("Sending HTTP-GET to pi@{}".format(ip))
                 r = get_status(ip)
@@ -88,7 +96,7 @@ if __name__ == "__main__":
         print("Please give path to config file and/or log path")
 
     # read config
-    config.read(argv[1])
+    monitor_config.read(argv[1])
     log_path = argv[2] if len(argv) == 3 and argv[2] else "/home/pi/pi-manager-ice/logs/monitor.log"
 
     _main()
