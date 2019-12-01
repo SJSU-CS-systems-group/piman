@@ -163,3 +163,40 @@ The `/etc/rc.local` file has been updated on the manager and the nodes to run th
 
 ### Logs
 all print statements will be redirectiong to logs folder with format YEAR-MONTH-DATE_hour:minutes.log in logs folder
+
+## NTP Server 
+Used a NTP server found here: https://github.com/limifly/ntpserver, minor bugs fixed
+The process for setting up the ntp client on pi's is explained here: http://raspberrypi.tomasgreno.cz/ntp-client-and-server.html
+The tally codes in 'ntpq -pn' are listed in: https://linux.die.net/man/8/ntpq
+
+To get ntp setup you must 'sudo apt-get install ntp' on the pi. 
+
+Then you want to stop the timesyncd service:
+
+```
+systemctl stop systemd-timesyncd
+systemctl disable systemd-timesyncd
+​/etc/init.d/ntp stop
+​/etc/init.d/ntp start
+```
+After go into '/etc/ntp.conf' and remove the servers:
+
+```
+# pool.ntp.org maps to more than 300 low-stratum NTP servers.
+# Your server will pick a different set every time it starts up.
+# *** Please consider joining the pool! ***
+# *** ***
+server 0.cz.pool.ntp.org iburst
+server 1.cz.pool.ntp.org iburst
+server 2.cz.pool.ntp.org iburst
+server 3.cz.pool.ntp.org iburs
+```
+
+Then restart the pi and DHCP will populate the '/run/ntp.conf.dhcp' file with the vm as a NTP server, the ip is taken from the vm ip in piman.conf
+
+You can check the list of servers with 'ntpq -pn' and after the ntp server receives and sends a few messages there should be a '*' meaning that it is the selected ntp server the client is getting the time from.
+
+The NTP server has its own thread in piman.py, on start it creates a socket that listens for ntp messages from all reachable ip's on port 123. The file has two threads a worker and reciever. The receiver will see requests on the 
+soccket and open up another socket to receive data from the client, it times this and enqueques the final time and address of the client. The worker will dequeue and send  the needed times to the requesting client. 
+
+If testing you can type 'sudo /etc/init.d/ntp restart' on the pi to have the client to instantly send a ntp message to the server.
