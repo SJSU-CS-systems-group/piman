@@ -106,7 +106,7 @@ do
         ;;
     format)
         format
-       	cd /m
+   	    cd /m
         # After the partitions have been formatted, send "FORMATTED" to let Piman know
         # that we are ready to receive the port # that we will transfer the file over
         # Pipe the file input so it would unzip the file
