@@ -22,7 +22,7 @@ log_path = ""
 
 def alert(data):
     print_to_file(data)
-    url = monitor_config['DEFAULT']['slack']
+    url = config['DEFAULT']['slack']
     headers = {'Content-type': 'application/json'}
     try:
         r = requests.post(
