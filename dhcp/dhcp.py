@@ -96,11 +96,12 @@ class WriteBootProtocolPacket(object):
     def options(self):
         done = list()
         # fulfill wishes
-        for option in self.parameter_order:
-            if option < len(options) and hasattr(self, options[option][0]) or hasattr(self, 'option_{}'.format(option)):
-                # this may break with the specification because we must try to fulfill the wishes
-                if option not in done:
-                    done.append(option)
+        if self.parameter_order:
+            for option in self.parameter_order:
+                if option < len(options) and hasattr(self, options[option][0]) or hasattr(self, 'option_{}'.format(option)):
+                    # this may break with the specification because we must try to fulfill the wishes
+                    if option not in done:
+                        done.append(option)
         # add my stuff
         for option, o in enumerate(options):
             if o[0] and hasattr(self, o[0]):
@@ -188,7 +189,7 @@ class Transaction(object):
         if should_send_offer:
             self.send_offer(discovery)
         else:
-            print("unknown mac_address. will not assign ip")
+            print("unknown mac_address {}. will not assign ip".format(discovery.client_mac_address))
 
     def send_offer(self, discovery):
         # https://tools.ietf.org/html/rfc2131
