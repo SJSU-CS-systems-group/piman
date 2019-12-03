@@ -16,6 +16,3 @@ with open(file[0]) as f:
         config = yaml.safe_load(f)
     except yaml.YAMLError as e:
         print(e)
-
-with open(os.path.abspath("./install/boot/cmdline.txt"), "a") as f:
-    f.write(str(config['server_address']).rstrip("\n"))
