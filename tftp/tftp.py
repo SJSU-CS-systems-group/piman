@@ -5,6 +5,7 @@ from struct import unpack, pack
 from threading import Thread
 from zipfile import ZipFile
 
+import io
 import os
 
 """
@@ -48,7 +49,12 @@ class TFTPServer:
         except KeyError:
             pass  # we'll try looking in the filesystem next
         if not fd:
-            return open("{}/{}".format(self.data_dir, name), "rb")
+            fd = open("{}/{}".format(self.data_dir, name), "rb")
+        if 'cmdline.txt' in name and fd:
+            # we need to fixup the master address
+            content = fd.read()
+            fd.close()
+            fd = io.BytesIO(content.replace(b'MASTER', self.connection_address.encode()))
         return fd
 
     """
