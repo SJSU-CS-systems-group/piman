@@ -49,12 +49,14 @@ tcp_port = 3333
 ip = config['server_address']
 subnet_mask = config['subnet_mask']
 mac_ip_file = "hosts.csv"
+lease_time = 600
+interface = config['interface']
 
 def server():
     tftp_thread = Thread(target=tftp.do_tftpd, args=[data_dir, ip, tftp_port], name="tftpd")
     tftp_thread.start()
 
-    dhcp_thread = Thread(target=dhcp.do_dhcp, args=[ip, subnet_mask, mac_ip_file], name="dhcpd")
+    dhcp_thread = Thread(target=dhcp.do_dhcp, args=[mac_ip_file, subnet_mask, ip, lease_time, interface], name="dhcpd")
     dhcp_thread.start()
 
     tcp_thread = Thread(target=tcp.do_tcp, args=[data_dir, tcp_port, ip], name="tcp")

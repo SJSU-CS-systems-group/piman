@@ -87,9 +87,10 @@ class TCPServer:
         """
         try:
             print("serving client from: {}".format(client_addr))    
-            req = client_socket.recv(1024)
+            fd = client_socket.makefile()
+            req = fd.readline()
             while req:    
-                req = req.decode("ASCII").strip()
+                req = req.strip()
                 print("TCP - recieved request {}".format(req))
                 if req == RECV_IS_UNINSTALLED:
                     print("TCT - uninstalled, sending format")
@@ -106,7 +107,7 @@ class TCPServer:
                     break
                 else:
                     print("TCP - not supported request")
-                req = client_socket.recv(1024)
+                req = fd.readline()
         except:
             traceback.print_exc()
         client_socket.close()
