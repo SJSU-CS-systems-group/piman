@@ -7,12 +7,12 @@ app = Flask(__name__)
 
 hosts_csv_path = "../hosts.csv"
 config_path = "../.yaml"
-city_name = ""
+org_name = ""
 
 
 @app.route('/')
 def home():
-    return render_template("home.html", city=city_name)
+    return render_template("home.html", city=org_name)
 
 
 @app.route('/hosts-csv')
@@ -65,9 +65,7 @@ def get_hosts_csv():
     if os.path.isfile(hosts_csv_path) == False:
         print("Host csv not found, generating new file")
         with open(hosts_csv_path, "w") as f:
-            for num in range(0, 10):
-                f.write("B8:27:EB:" + str(num) + str(num) + ":" + str(num) + str(num) + "." +
-                        str(num) + str(num) + ";172.30.8." + str(num) + ";" + city_name + ";0\n")
+            f.write("B8:27:EB:;;;\n")
     with open(hosts_csv_path) as f:
         hosts_csv_file_read = f.readlines()
     return jsonify(hosts_csv_file_read)
@@ -79,15 +77,14 @@ def get_config():
     if os.path.isfile(config_path) == False:
         print("Config yaml not found, generating new file")
         with open(config_path, "w") as f:
-            f.write("private_number: 4\n")
-            f.write("server_address: 172.30.4.1\n")
-            f.write("subnet_mask: 255.255.255.0\n")
-            f.write("switch_count: 1\n")
+            f.write("private_number: \n")
+            f.write("server_address: \n")
+            f.write("subnet_mask: \n")
+            f.write("switch_count: \n")
             f.write("switches:\n")
-            f.write("  - switch_0_address: 172.30.4.254\n")
+            f.write("  - switch_0_address: \n")
             f.write("    pi_addresses:" + "\n")
-            for num in range(11, 21):
-                f.write("      - 172.30.8." + str(num) + "\n")
+            f.write("      - \n")
     fileHandler = open(config_path, "r")
     while True:
         # Get next line from file
@@ -129,17 +126,18 @@ def get_config():
     fileHandler.close()
     return jsonify(config_file_read)
 
-
+'''
 @click.command()
-@click.option('--name', prompt='Your city',
-              help='The city your group is in.')
+@click.option('--name', prompt='Your Organization',
+              help='The name of your organization.')
 @click.option('--configpath', prompt='Path of config (.yaml) file',
               help='The path to the config file from the current working path.')
 @click.option('--hostcsvpath', prompt='Path of hosts.csv file',
               help='The path to the config file from the current working path.')
+'''
 def hello(name, configpath, hostcsvpath):
-    global city_name
-    city_name = name
+    global org_name
+    org_name = name
     global config_path
     config_path = configpath
     global hosts_csv_path
