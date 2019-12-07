@@ -2,10 +2,10 @@
 This is a simple Python server-side web application which helps users modify the configuration .yaml and hosts.csv.
 
 ## Setup
-This setup assumes that you already have base PiMan running on Python3, etc.
+This setup should only be needed if you are looking to run the web application by itself.
 
 1. Install Flask, the python web application framework: 'sudo apt install python3-flask'.  'pip3 install flask' may also work as well if you have pip3.
-2. In the /config-ui/ directory, run the following command to start the server: 'python3 hello.py'.  This will prompt users for their city name, config path, and hosts.csv path.  'env FLASK_APP=hello.py flask run' will also run the server, but uses the default hardcoded configuration.
+2. In the /config-ui/ directory, run the following command to start the server: 'python3 web_ui.py'.  This will prompt users for their city name, config path, and hosts.csv path.  'env FLASK_APP=web_ui.py flask run' will also run the server, but uses the default hardcoded configuration.
 
 That's it.
 
