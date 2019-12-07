@@ -1,6 +1,6 @@
 #!/bin/bash
 rm -rf build
-PYTHONUSERBASE=$PWD/build python3 -m pip install click pysnmp
+PYTHONUSERBASE=$PWD/build python3 -m pip install click pysnmp flask
 mkdir build/piman.app
 (
     cd build/lib/python*/site-packages
