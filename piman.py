@@ -6,8 +6,9 @@ from sys import argv
 from dhcp import dhcp
 from tcp import tcp
 from tftp import tftp
-from utility import power_cycle
-from parse_config import config
+#from utility import power_cycle
+#from parse_config import config
+from config_ui import web_ui
 
 
 '''
@@ -46,8 +47,8 @@ exit_piman()
 data_dir = "./install/boot"
 tftp_port = 69
 tcp_port = 3333
-ip = config['server_address']
-subnet_mask = config['subnet_mask']
+#ip = config['server_address']
+#subnet_mask = config['subnet_mask']
 mac_ip_file = "hosts.csv"
 
 def server():
@@ -63,7 +64,6 @@ def server():
     tftp_thread.join()
     dhcp_thread.join()
     tcp_thread.join()
-
 
 def restart(switch_address, ports):
     for port in ports:
@@ -100,3 +100,5 @@ if __name__ == "__main__":
         if len(argv) < 3:
             exit_piman()
         reinstall(argv[2], argv[3])
+    elif argv[1] == "config":
+        web_ui.hello(argv[2], argv[3], argv[4])
