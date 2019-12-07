@@ -113,7 +113,7 @@ do
         nc $master 4444 | gunzip | tar -xf -
         # Mounts the OS on /new_root and exits
         mounting
-	    send "IS_FORMATTED"
+        send "IS_FORMATTED"
         exit 0
         ;;
     reinstall)
