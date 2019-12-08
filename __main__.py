@@ -33,12 +33,9 @@ def power_cycle():
 
 
 @cli.command()
-@click.option('--name', prompt='Your Organization',
-              help='The name of your organization.')
-@click.option('--configpath', prompt='Path of config (.yaml) file',
-              help='The path to the config file from the current working path.')
-@click.option('--hostcsvpath', prompt='Path of hosts.csv file',
-              help='The path to the config file from the current working path.')
+@click.argument('name')
+@click.argument('configpath')
+@click.argument('hostcsvpath')
 def config(name, configpath, hostcsvpath):
     piman.config_ui(name, configpath, hostcsvpath)
 
