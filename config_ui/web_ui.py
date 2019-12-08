@@ -2,7 +2,6 @@ import threading
 from flask import Flask, escape, request, render_template, jsonify
 import click
 import os.path
-import os
 
 app = Flask(__name__)
 
@@ -153,11 +152,6 @@ def get_config():
 
 
 def hello(name, configpath, hostcsvpath):
-    cwd = os.getcwd()
-    print(cwd)
-    if "piman.pyz" in cwd:
-        os.chdir("../piman.app")
-        print(os.getcwd())
     global org_name
     org_name = name
     global config_path
