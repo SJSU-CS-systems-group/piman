@@ -4,11 +4,6 @@ import click
 import os.path
 import os
 
-cwd = os.getcwd()
-if "piman.pyz" in cwd:
-    os.chdir("../piman.app")
-    print(os.getcwd())
-
 app = Flask(__name__)
 
 hosts_csv_path = "../hosts.csv"
@@ -168,4 +163,9 @@ def hello(name, configpath, hostcsvpath):
 
 
 if __name__ == "__main__":
+    cwd = os.getcwd()
+    print(cwd)
+    if "piman.pyz" in cwd:
+        os.chdir("../piman.app")
+        print(os.getcwd())
     hello()
