@@ -2,6 +2,12 @@ import threading
 from flask import Flask, escape, request, render_template, jsonify
 import click
 import os.path
+import os
+
+cwd = os.getcwd()
+if "piman.pyz" in cwd:
+    os.chdir("../piman.app")
+    print(os.getcwd())
 
 app = Flask(__name__)
 
