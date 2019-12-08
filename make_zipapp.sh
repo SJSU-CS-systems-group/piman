@@ -1,6 +1,7 @@
 #!/bin/bash
 rm -rf build
-PYTHONUSERBASE=$PWD/build python3 -m pip install click pysnmp flask
+mkdir build
+PYTHONUSERBASE=$PWD/build python3 -m pip install --ignore-installed click pysnmp flask
 mkdir build/piman.app
 (
     cd build/lib/python*/site-packages
@@ -12,5 +13,4 @@ cp -r install/boot build/piman.app/install
 cp -r config_ui build/piman.app/config_ui
 # we don't want crypto stuff since it has native code
 rm -r build/piman.app/Crypto*
-python3 config.py
-python3 -m zipapp build/piman.app 
+python3 -m zipapp build/piman.app
