@@ -153,6 +153,11 @@ def get_config():
 
 
 def hello(name, configpath, hostcsvpath):
+    cwd = os.getcwd()
+    print(cwd)
+    if "piman.pyz" in cwd:
+        os.chdir("../piman.app")
+        print(os.getcwd())
     global org_name
     org_name = name
     global config_path
@@ -163,9 +168,4 @@ def hello(name, configpath, hostcsvpath):
 
 
 if __name__ == "__main__":
-    cwd = os.getcwd()
-    print(cwd)
-    if "piman.pyz" in cwd:
-        os.chdir("../piman.app")
-        print(os.getcwd())
     hello()
