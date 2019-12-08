@@ -3,12 +3,19 @@ from flask import Flask, escape, request, render_template, jsonify
 import click
 import os.path
 
-app = Flask(__name__)
-
 hosts_csv_path = "../hosts.csv"
 config_path = "../.yaml"
 org_name = ""
 
+#remaps .pyz to .app
+def get_flask_path():
+    flask_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    if ".pyz" in flask_path:
+        flask_path = flask_path[0:flask_path.find(".pyz")]
+        flask_path += ".app/config_ui/"
+    return flask_path
+
+app = Flask(__name__, root_path=get_flask_path())
 
 @app.route('/')
 def home():
