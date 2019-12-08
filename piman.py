@@ -51,19 +51,24 @@ tcp_port = 3333
 #subnet_mask = config['subnet_mask']
 mac_ip_file = "hosts.csv"
 
+
 def server():
-    tftp_thread = Thread(target=tftp.do_tftpd, args=[data_dir, ip, tftp_port], name="tftpd")
+    tftp_thread = Thread(target=tftp.do_tftpd, args=[
+                         data_dir, ip, tftp_port], name="tftpd")
     tftp_thread.start()
 
-    dhcp_thread = Thread(target=dhcp.do_dhcp, args=[ip, subnet_mask, mac_ip_file], name="dhcpd")
+    dhcp_thread = Thread(target=dhcp.do_dhcp, args=[
+                         ip, subnet_mask, mac_ip_file], name="dhcpd")
     dhcp_thread.start()
 
-    tcp_thread = Thread(target=tcp.do_tcp, args=[data_dir, tcp_port, ip], name="tcp")
+    tcp_thread = Thread(target=tcp.do_tcp, args=[
+                        data_dir, tcp_port, ip], name="tcp")
     tcp_thread.start()
 
     tftp_thread.join()
     dhcp_thread.join()
     tcp_thread.join()
+
 
 def restart(switch_address, ports):
     for port in ports:
@@ -80,6 +85,11 @@ def reinstall(switch_address, port):
 def exit_piman():
     print("Insufficient amount of arguments")
     exit(1)
+
+
+def config_ui(name, config_path, hosts_csv_path):
+    web_ui.hello(name, config_path, hosts_csv_path)
+
 
 if __name__ == "__main__":
     args = "Arguments: "
@@ -101,4 +111,4 @@ if __name__ == "__main__":
             exit_piman()
         reinstall(argv[2], argv[3])
     elif argv[1] == "config":
-        web_ui.hello(argv[2], argv[3], argv[4])
+        config_ui(argv[2], argv[3], argv[4])

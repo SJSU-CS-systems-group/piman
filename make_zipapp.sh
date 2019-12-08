@@ -1,8 +1,7 @@
 #!/bin/bash
 rm -rf build
 mkdir build
-PYTHONUSERBASE=$PWD/build python3 -m pip install --ignore-installed click pysnmp Flask
-PYTHONUSERBASE=$PWD/build python3 -m pip install python-dotenv
+PYTHONUSERBASE=$PWD/build python3 -m pip install --ignore-installed click pysnmp Flask python-dotenv
 mkdir build/piman.app
 (
     cd build/lib/python*/site-packages
