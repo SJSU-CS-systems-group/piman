@@ -9,10 +9,11 @@ org_name = ""
 
 #remaps .pyz to .app
 def get_flask_path():
-    flask_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    flask_path = os.path.dirname(os.path.abspath(__file__))
     if ".pyz" in flask_path:
         flask_path = flask_path[0:flask_path.find(".pyz")]
         flask_path += ".app/config_ui/"
+    print(flask_path)
     return flask_path
 
 app = Flask(__name__, root_path=get_flask_path())
