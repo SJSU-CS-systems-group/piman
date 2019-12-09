@@ -65,10 +65,10 @@ def config_form_post():
     numOfPis = request.form.getlist('inputsSwitchLen')
     listOfPis = request.form.getlist('inputsPi')
     with open(config_path, "w") as f:
-        f.write("private_number: " + listOfInputs[0] + "\n")
-        f.write("server_address: " + listOfInputs[1] + "\n")
-        f.write("subnet_mask: " + listOfInputs[2] + "\n")
-        f.write("interface: " + listOfInputs[3] + "\n")
+        f.write("private_number: " + listOfInputs[1] + "\n")
+        f.write("server_address: " + listOfInputs[2] + "\n")
+        f.write("subnet_mask: " + listOfInputs[3] + "\n")
+        f.write("interface: " + listOfInputs[0] + "\n")
         f.write("switch_count: " + str(len(listOfSwitches)) + "\n")
         f.write("switches:\n")
         currSwitch = 0
