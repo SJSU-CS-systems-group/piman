@@ -27,6 +27,8 @@
 
 import sys
 from pysnmp.hlapi import *
+import logging
+import logging.config
 
 #create logger using configuration
 logging.config.fileConfig('./logging.conf')

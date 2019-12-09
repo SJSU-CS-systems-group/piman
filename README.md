@@ -34,6 +34,7 @@ To configure piman, create a YAML file with the following format:
 private_number:
 server_address:
 subnet_mask:
+interface: 
 switch_count:
 switches:
   - swtich_0_address:
@@ -55,6 +56,7 @@ For example:
 private_number: 4
 server_address: 172.30.4.1
 subnet_mask: 255.255.255.0
+interface: ens4
 switch_count: 2
 switches:
   - swtich_0_address: 172.30.4.254
@@ -139,4 +141,7 @@ Currently the system send a slack message to `#ice2` channel. You can create a s
 
 ### Start Up Scripts 
 
-The `/etc/rc.local` file has been updated on the manager and the nodes to run the server and monitoring tools from startup. Take a look at it for each machine to get a better understanding of the startup process. 
+The `/etc/rc.local` file has been updated on the manager and the nodes to run the server and monitoring tools from startup. Take a look at it for each machine to get a better understanding of the startup process.
+
+### Logs
+all print statements will be redirectiong to logs folder with format YEAR-MONTH-DATE_hour:minutes.log in logs folder

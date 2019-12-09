@@ -8,7 +8,8 @@ from tcp import tcp
 from tftp import tftp
 from utility import power_cycle
 from parse_config import config
-
+import logging
+import logging.config
 
 '''
 piman.py

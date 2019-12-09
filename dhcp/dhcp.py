@@ -8,6 +8,8 @@ import socket
 from random import randrange
 import uuid
 from .listener import *
+import logging
+import logging.config
 
 """
 This class contains specified attributes which will be populated, these attributes are associated with
@@ -266,19 +268,7 @@ class DHCPServerConfiguration(object):
     def load(self, file):
         with open(file) as f:
             exec(f.read(), self.__dict__)
-"""
-    def adjust_if_this_computer_is_a_router(self):
-        ip_addresses = get_host_ip_addresses()
-        for ip in reversed(ip_addresses):
-            if ip.split('.')[-1] == '1':
-                self.router = [ip]
-                self.domain_name_server = [ip]
-                self.network = '.'.join(ip.split('.')[:-1] + ['0'])
-                self.broadcast_address = '.'.join(ip.split('.')[:-1] + ['255'])
-                #self.ip_forwarding_enabled = True
-                #self.non_local_source_routing_enabled = True
-                #self.perform_mask_discovery = True
-"""
+
 
     def all_ip_addresses(self):
         ips = ip_addresses(self.network, self.subnet_mask)
@@ -296,13 +286,6 @@ class ALL(object):
         return self.__class__.__name__
 ALL = ALL()
 
-"""
-class GREATER(object):
-    def __init__(self, value):
-        self.value = value
-    def __eq__(self, other):
-        return type(self.value)(other) > self.value
-"""
 
 class NETWORK(object):
     def __init__(self, network, subnet_mask):
@@ -550,24 +533,7 @@ class DHCPServer(object):
                 break
             except:
                 traceback.print_exc()
-"""
-    def run_in_thread(self):
-        thread = threading.Thread(target = self.run)
-        thread.start()
-        return thread
 
-    def debug_clients(self):
-        for line in self.ips.all():
-            line = '\t'.join(line)
-            if line:
-                self.configuration.debug(line)
-
-    def get_all_hosts(self):
-        return sorted_hosts(self.hosts.get())
-
-    def get_current_hosts(self):
-        return sorted_hosts(self.hosts.get(last_used = GREATER(self.time_started)))
-"""
 # Produces a list of inet addresses associated with the local host.
 def get_host_ip_addresses():
     return gethostbyname_ex(gethostname())[2]

@@ -2,7 +2,8 @@ from threading import Thread
 from socket import AF_INET, SOCK_STREAM, socket
 from struct import unpack, pack
 import traceback
-
+import logging
+import logging.config
 # messages recieved from PI
 
 RECV_IS_INSTALLED = "IS_INSTALLED"

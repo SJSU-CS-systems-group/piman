@@ -7,6 +7,8 @@ setting to 1 will turn ON the port, setting to 2 will turn OFF the port
 from pysnmp.hlapi import *  # PySNMP library
 import time  # For sleeping
 from parse_config import config
+import logging
+import logging.config
 
 #create logger using configuration
 logging.config.fileConfig('./logging.conf')

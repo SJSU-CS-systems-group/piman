@@ -7,7 +7,8 @@ from zipfile import ZipFile
 
 import io
 import os
-
+import logging
+import logging.config
 """
 This code is modified following Prof. Reed suggestion
 """
@@ -226,26 +227,7 @@ class TFTPServer:
         self.tftp_thread.join()
 
 
-"""@click.command()
-@click.option(
-    "--data_dir",
-    default=".",
-    metavar="root_of_files_to_serve",
-    type=click.Path(exists=True, file_okay=False, resolve_path=True),
-    help="the directory to use as the root of the files being served",
-)
-@click.option(
-    "--tftp_port",
-    default=69,
-    metavar="UDP_listening_port",
-    help="the UDP port to listen for tftp client requests",
-)
-@click.option(
-    "--connection_address",
-    default="",
-    metavar="UDP_listening_address",
-    help="the address to listen on for request",
-)"""
+
 
 
 def do_tftpd(data_dir, connection_address, tftp_port):
