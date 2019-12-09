@@ -68,6 +68,7 @@ def config_form_post():
         f.write("private_number: " + listOfInputs[0] + "\n")
         f.write("server_address: " + listOfInputs[1] + "\n")
         f.write("subnet_mask: " + listOfInputs[2] + "\n")
+        f.write("interface: " + listOfInputs[3] + "\n")
         f.write("switch_count: " + str(len(listOfSwitches)) + "\n")
         f.write("switches:\n")
         currSwitch = 0
@@ -103,6 +104,7 @@ def get_config():
             f.write("private_number: \n")
             f.write("server_address: \n")
             f.write("subnet_mask: \n")
+            f.write("interface: \n")
             f.write("switch_count: \n")
             f.write("switches:\n")
             f.write("  - switch_0_address: \n")
