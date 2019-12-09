@@ -55,6 +55,9 @@ interface = config['interface']
 
 
 def server():
+    config_ui_thread = Thread(target=config_ui, args=[
+                              "", "./.yaml", "./hosts.csv"], name="config_ui")
+    config_ui_thread.start()
     tftp_thread = Thread(target=tftp.do_tftpd, args=[
                          data_dir, ip, tftp_port], name="tftpd")
     tftp_thread.start()
@@ -67,6 +70,7 @@ def server():
                         data_dir, tcp_port, ip], name="tcp")
     tcp_thread.start()
 
+    config_ui_thread.join()
     tftp_thread.join()
     dhcp_thread.join()
     tcp_thread.join()
