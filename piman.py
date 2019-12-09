@@ -84,7 +84,7 @@ def server():
     tftp_thread.start()
 
     dhcp_thread = Thread(target=dhcp.do_dhcp, args=[
-                         ip, subnet_mask, mac_ip_file], name="dhcpd")
+                         mac_ip_file, subnet_mask, ip, lease_time, interface], name="dhcpd")
     dhcp_thread.start()
 
     tcp_thread = Thread(target=tcp.do_tcp, args=[
