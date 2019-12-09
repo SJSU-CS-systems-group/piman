@@ -50,6 +50,8 @@ tcp_port = 3333
 ip = config['server_address']
 subnet_mask = config['subnet_mask']
 mac_ip_file = "hosts.csv"
+lease_time = 600
+interface = config['interface']
 
 
 def server():
