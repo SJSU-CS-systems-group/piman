@@ -43,6 +43,10 @@ exit_piman()
     
 '''
 
+#create logger using configuration
+logging.config.fileConfig('./logging.conf')
+logger = logging.getLogger('pimanlogger')
+
 data_dir = "./install/boot"
 tftp_port = 69
 tcp_port = 3333
@@ -80,14 +84,14 @@ def reinstall(switch_address, port):
 
 
 def exit_piman():
-    print("Insufficient amount of arguments")
+    logger.error("Insufficient amount of arguments")
     exit(1)
 
 if __name__ == "__main__":
     args = "Arguments: "
     for a in argv:
         args += a + " "
-    print(args)
+    logger.info(args)
 
     if len(argv) < 2:
         exit_piman()
