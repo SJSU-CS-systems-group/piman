@@ -88,7 +88,7 @@ def get_hosts_csv():
     if os.path.isfile(hosts_csv_path) == False:
         print("Host csv not found, generating new file")
         with open(hosts_csv_path, "w") as f:
-            f.write("B8:27:EB:;;;\n")
+            f.write("")
     with open(hosts_csv_path) as f:
         hosts_csv_file_read = f.readlines()
     return jsonify(hosts_csv_file_read)
@@ -161,7 +161,7 @@ def get_config():
 '''
 
 
-def hello(name, configpath, hostcsvpath):
+def start(name, configpath, hostcsvpath):
     global org_name
     org_name = name
     global config_path
@@ -172,4 +172,4 @@ def hello(name, configpath, hostcsvpath):
 
 
 if __name__ == "__main__":
-    hello()
+    start()

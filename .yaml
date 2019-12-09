@@ -1,0 +1,8 @@
+private_number: 
+server_address: 
+subnet_mask: 
+switch_count: 
+switches:
+  - switch_0_address: 
+    pi_addresses:
+      - 

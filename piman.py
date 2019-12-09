@@ -1,16 +1,36 @@
-# import click
+import logging
+import logging.config
+import os
+from zipfile import ZipFile
+import io
+
+
+# create the logger before doing imports since everyone is going
+# to use them
+local_logfile = './logging.conf'
+if os.path.isfile(local_logfile):
+    logging.config.fileConfig(local_logfile)
+else:
+    zipfile = os.path.dirname(__file__)
+    with ZipFile(zipfile) as z:
+        fd = z.open("logging.conf", mode='r')
+        # convert to a string
+        confstr = fd.read().decode()
+        logging.config.fileConfig(io.StringIO(confstr))
+
+#create logger using configuration
+logger = logging.getLogger('pimanlogger')
 
 from threading import Thread
 from sys import argv
 
+from config_ui import web_ui
 from dhcp import dhcp
 from tcp import tcp
 from tftp import tftp
 from utility import power_cycle
+from piman import logger
 from parse_config import config
-from config_ui import web_ui
-
-
 '''
 piman.py
 
@@ -58,6 +78,7 @@ def server():
     config_ui_thread = Thread(target=config_ui, args=[
                               "", "./.yaml", "./hosts.csv"], name="config_ui")
     config_ui_thread.start()
+
     tftp_thread = Thread(target=tftp.do_tftpd, args=[
                          data_dir, ip, tftp_port], name="tftpd")
     tftp_thread.start()
@@ -87,21 +108,18 @@ def reinstall(switch_address, port):
         f.write(network_addr+str(port))
     power_cycle.power_cycle(switch_address, port)
 
+def config_ui(name, config_path, hosts_csv_path):
+    web_ui.start(name, config_path, hosts_csv_path)
 
 def exit_piman():
-    print("Insufficient amount of arguments")
+    logger.error("Insufficient amount of arguments")
     exit(1)
-
-
-def config_ui(name, config_path, hosts_csv_path):
-    web_ui.hello(name, config_path, hosts_csv_path)
-
 
 if __name__ == "__main__":
     args = "Arguments: "
     for a in argv:
         args += a + " "
-    print(args)
+    logger.info(args)
 
     if len(argv) < 2:
         exit_piman()
