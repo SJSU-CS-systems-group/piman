@@ -8,17 +8,12 @@ import socket
 from random import randrange
 import uuid
 from .listener import *
-import logging
-import logging.config
+from piman import logger
 
 """
 This class contains specified attributes which will be populated, these attributes are associated with
 the required options for our DHCP+PXE server. 
 """
-
-# create logger using configuration
-logging.config.fileConfig('./logging.conf')
-logger = logging.getLogger('pimanlogger')
 
 class WriteBootProtocolPacket(object):
 
