@@ -13,7 +13,7 @@ That's it.
 
 Sometimes PiMan runs on a VM, making it difficult to access the website directly.  Use SSH tunneling instead.
 - On one terminal: SSH into your city and go to /config-ui/.  Start the webserver, as stated in Setup #2.
-- On another terminal: Execute this command: 'ssh -L 8080:localhost:5000 dubai' but replace ‘dubai’ with your city’s name or endpoint.
+- On another terminal: Execute this command: 'ssh -N -L 8080:localhost:5000 dubai' but replace ‘dubai’ with your ssh target/endpoint(e.g. name@dubai).  You can open up multiple terminals and repeat this process, forwarding 5000:localhost:5000 to tunnel through multiple VMs.
 - You should now be able to connect to the webserver on your ssh client by going to 'localhost:8080' in your browser.
 
 ## More Information
