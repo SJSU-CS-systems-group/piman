@@ -24,38 +24,65 @@ def parse():
 
             pi_ip = pi[0].split('@')[1]
             time = int(float(pi[0].split(' -')[0]) * 1000)
-            cpu_load = float(pi[3].replace("CPU load: ", "").replace(" ", ""))
-            ram = float(pi[4].replace("RAM usage: ", "").replace(" ", ""))
-            disk_usage = float(pi[5].replace("Disk usage: ", "").replace(" ", ""))
-            pids = int(pi[6].replace("# of PIDs: ", "").replace(" ", ""))
-            temp = float(pi[7].replace("Temperature: ", "").replace(" Celsius", "").replace(" ", ""))
+            try:
+                cpu_load = float(pi[3].replace("CPU load: ", "").replace(" ", ""))
+                ram = float(pi[4].replace("RAM usage: ", "").replace(" ", ""))
+                disk_usage = float(pi[5].replace("Disk usage: ", "").replace(" ", ""))
+                pids = int(pi[6].replace("# of PIDs: ", "").replace(" ", ""))
+                temp = float(pi[7].replace("Temperature: ", "").replace(" Celsius", "").replace(" ", ""))
 
-            if pi_ip + " CPU" not in DATA:
-                DATA[pi_ip + " CPU"] = {time: cpu_load}
-            else:
-                DATA[pi_ip + " CPU"][time] = cpu_load
+                if pi_ip + " CPU" not in DATA:
+                    DATA[pi_ip + " CPU"] = {time: cpu_load}
+                else:
+                    DATA[pi_ip + " CPU"][time] = cpu_load
 
-            if pi_ip + " Ram" not in DATA:
-                DATA[pi_ip + " Ram"] = {time: ram}
-            else:
-                DATA[pi_ip + " Ram"][time] = ram
+                if pi_ip + " Ram" not in DATA:
+                    DATA[pi_ip + " Ram"] = {time: ram}
+                else:
+                    DATA[pi_ip + " Ram"][time] = ram
 
-            if pi_ip + " Disk Usage" not in DATA:
-                DATA[pi_ip + " Disk Usage"] = {time: disk_usage}
-            else:
-                DATA[pi_ip + " Disk Usage"][time] = disk_usage
+                if pi_ip + " Disk Usage" not in DATA:
+                    DATA[pi_ip + " Disk Usage"] = {time: disk_usage}
+                else:
+                    DATA[pi_ip + " Disk Usage"][time] = disk_usage
 
-            if pi_ip + " PIDs" not in DATA:
-                DATA[pi_ip + " PIDs"] = {time: pids}
-            else:
-                DATA[pi_ip + " PIDs"][time] = pids
+                if pi_ip + " PIDs" not in DATA:
+                    DATA[pi_ip + " PIDs"] = {time: pids}
+                else:
+                    DATA[pi_ip + " PIDs"][time] = pids
 
-            if pi_ip + " Temperature" not in DATA:
-                DATA[pi_ip + " Temperature"] = {time: temp}
-            else:
-                DATA[pi_ip + " Temperature"][time] = temp
+                if pi_ip + " Temperature" not in DATA:
+                    DATA[pi_ip + " Temperature"] = {time: temp}
+                else:
+                    DATA[pi_ip + " Temperature"][time] = temp
+            except:
+                if pi_ip + " CPU" not in DATA:
+                    DATA[pi_ip + " CPU"] = {time: 0}
+                else:
+                    DATA[pi_ip + " CPU"][time] = {time: 0}
+
+                if pi_ip + " Ram" not in DATA:
+                    DATA[pi_ip + " Ram"] = {time: 0}
+                else:
+                    DATA[pi_ip + " Ram"][time] = {time: 0}
+
+                if pi_ip + " Disk Usage" not in DATA:
+                    DATA[pi_ip + " Disk Usage"] = {time: 0}
+                else:
+                    DATA[pi_ip + " Disk Usage"][time] = {time: 0}
+
+                if pi_ip + " PIDs" not in DATA:
+                    DATA[pi_ip + " PIDs"] = {time: 0}
+                else:
+                    DATA[pi_ip + " PIDs"][time] = {time: 0}
+
+                if pi_ip + " Temperature" not in DATA:
+                    DATA[pi_ip + " Temperature"] = {time: 0}
+                else:
+                    DATA[pi_ip + " Temperature"][time] = {time: 0}
 
         return True
+
     except:
         print("Monitoring Log file not found, make sure log_path points to monitor.log file")
         return False
@@ -83,6 +110,7 @@ def create_data_points(data, start, end):
         else:
             results.append([to_enter, time])
 
+    print(results)
     return results
 
 
@@ -132,4 +160,4 @@ if __name__ == '__main__':
         log_path = argv[1]
 
     if parse():
-        run(app=app, host='grafana', port=3333)
+        run(app=app, host='', port=8081)
