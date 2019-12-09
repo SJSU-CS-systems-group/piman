@@ -7,6 +7,12 @@ setting to 1 will turn ON the port, setting to 2 will turn OFF the port
 from pysnmp.hlapi import *  # PySNMP library
 import time  # For sleeping
 from parse_config import config
+import logging
+import logging.config
+
+#create logger using configuration
+logging.config.fileConfig('./logging.conf')
+logger = logging.getLogger('pimanLogger')
 
 private_number = config['private_number']
 
@@ -17,6 +23,7 @@ def power_cycle(switch_address, port):
 
 def turn_off(switch_address, port):
     print("Power_Cycle - Setting pi at port {} to OFF".format(port))
+    logger.warning("Power_Cycle - Setting pi at port {} to OFF".format(port))
     errorIndication, errorStatus, errorIndex, varBinds = next(
         setCmd(
             SnmpEngine(),
@@ -30,14 +37,18 @@ def turn_off(switch_address, port):
     )
     if errorIndication:
         print(errorIndication)
+        logger.error(errorIndication)
     elif errorStatus:
         print("Power_Cycle - not found")
+        logger.error("Power_Cycle - not found")
     else:
         print("Power_Cycle - Set pi at port {} to OFF".format(port))
+        logger.warning("Power_Cycle - Set pi at port {} to OFF".format(port))
 
 
 def turn_on(switch_address, port):
     print("Power_Cycle - Setting pi at port {} to ON".format(port))
+    logger.warning("Power_Cycle - Setting pi at port {} to ON".format(port))
     errorIndication, errorStatus, errorIndex, varBinds = next(
         setCmd(
             SnmpEngine(),
@@ -51,10 +62,13 @@ def turn_on(switch_address, port):
     )
     if errorIndication:
         print(errorIndication)
+        logger.error(errorIndication)
     elif errorStatus:
         print("Power_Cycle - not found")
+        logger.error("Power_Cycle - not found")
     else:
         print("Power_Cycle - Set pi at port {} to ON".format(port))
+        logger.warning("Power_Cycle - Set pi at port {} to ON".format(port))
 
 if __name__ == "__main__":
     power_cycle(10)

@@ -8,11 +8,18 @@ import socket
 from random import randrange
 import uuid
 from .listener import *
+import logging
+import logging.config
 
 """
 This class contains specified attributes which will be populated, these attributes are associated with
 the required options for our DHCP+PXE server. 
 """
+
+# create logger using configuration
+logging.config.fileConfig('./logging.conf')
+logger = logging.getLogger('pimanlogger')
+
 class WriteBootProtocolPacket(object):
 
     message_type = 2 # 1 for client -> server 2 for server -> client
@@ -189,7 +196,7 @@ class Transaction(object):
         if should_send_offer:
             self.send_offer(discovery)
         else:
-            print("unknown mac_address {}. will not assign ip".format(discovery.client_mac_address))
+            logger.error("unknown mac_address {}. will not assign ip.".format(discovery.client_mac_address))
 
     def send_offer(self, discovery):
         # https://tools.ietf.org/html/rfc2131
@@ -262,17 +269,6 @@ class DHCPServerConfiguration(object):
         with open(file) as f:
             exec(f.read(), self.__dict__)
 
-    def adjust_if_this_computer_is_a_router(self):
-        ip_addresses = get_host_ip_addresses()
-        for ip in reversed(ip_addresses):
-            if ip.split('.')[-1] == '1':
-                self.router = [ip]
-                self.domain_name_server = [ip]
-                self.network = '.'.join(ip.split('.')[:-1] + ['0'])
-                self.broadcast_address = '.'.join(ip.split('.')[:-1] + ['255'])
-                #self.ip_forwarding_enabled = True
-                #self.non_local_source_routing_enabled = True
-                #self.perform_mask_discovery = True
 
     def all_ip_addresses(self):
         ips = ip_addresses(self.network, self.subnet_mask)
@@ -290,11 +286,6 @@ class ALL(object):
         return self.__class__.__name__
 ALL = ALL()
 
-class GREATER(object):
-    def __init__(self, value):
-        self.value = value
-    def __eq__(self, other):
-        return type(self.value)(other) > self.value
 
 class NETWORK(object):
     def __init__(self, network, subnet_mask):
@@ -485,11 +476,13 @@ class DHCPServer(object):
             for host in known_hosts:
                 if self.is_valid_client_address(host.ip):
                     ip = host.ip
-            print('known ip:', ip)
+            str_known_ip = "known ip: " + str(ip)
+            logger.info(str_known_ip)
         if ip is None and self.is_valid_client_address(requested_ip_address):
             # 2. choose valid requested ip address
             ip = requested_ip_address
-            print('valid ip:', ip)
+            str_valid_ip = "valid ip: " + str(ip)
+            logger.info(str_valid_ip)
         if ip is None:
             # 3. choose new, free ip address
             chosen = False
@@ -503,9 +496,12 @@ class DHCPServer(object):
                 network_hosts.sort(key = lambda host: host.last_used)
                 ip = network_hosts[0].ip
                 assert self.is_valid_client_address(ip)
-            print('new ip:', ip)
+            str_new_ip = "new ip: " + str(ip)
+            logger.info(str_new_ip)
         if not any([host.ip == ip for host in known_hosts]):
-            print('add', mac_address, ip, packet.host_name)
+            str_add_mac = "add " + str(mac_address) + "ip: " + str(ip) + "hostname: " + str(packet.host_name)
+            logger.info(str_add_mac)
+            #print('add', mac_address, ip, packet.host_name)
             self.hosts.replace(Host(mac_address, ip, packet.host_name or '', time.time()))
         return ip
 
@@ -519,14 +515,14 @@ class DHCPServer(object):
             data = packet.to_bytes()
             self.broadcast_socket.sendto(data, ('255.255.255.255', 68))
         except:
-            print('error broadcasting')
+            logger.error('error broadcasting')
             traceback.print_exc()
 
     def unicast(self, packet):
         try:
             self.raw_sock.send(packet)
         except:
-            print('DCHP - error unicasting')
+            logger.error('DCHP - error unicasting')
             traceback.print_exc()
 
     def run(self):
@@ -537,23 +533,6 @@ class DHCPServer(object):
                 break
             except:
                 traceback.print_exc()
-
-    def run_in_thread(self):
-        thread = threading.Thread(target = self.run)
-        thread.start()
-        return thread
-
-    def debug_clients(self):
-        for line in self.ips.all():
-            line = '\t'.join(line)
-            if line:
-                self.configuration.debug(line)
-
-    def get_all_hosts(self):
-        return sorted_hosts(self.hosts.get())
-
-    def get_current_hosts(self):
-        return sorted_hosts(self.hosts.get(last_used = GREATER(self.time_started)))
 
 # Produces a list of inet addresses associated with the local host.
 def get_host_ip_addresses():
@@ -641,7 +620,7 @@ def do_dhcp(hosts_file, subnet_mask, ip, lease_time, net_inter):
     server = DHCPServer(configuration)
     for ip in server.configuration.all_ip_addresses():
         assert ip == server.configuration.network_filter()
-    print("DHCP server is running...")
+    logger.warning("DHCP server is running...")
     server.run()
     
 if __name__ == '__main__':

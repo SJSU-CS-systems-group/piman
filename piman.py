@@ -8,7 +8,8 @@ from tcp import tcp
 from tftp import tftp
 from utility import power_cycle
 from parse_config import config
-
+import logging
+import logging.config
 
 '''
 piman.py
@@ -42,6 +43,10 @@ exit_piman()
     to exit piman
     
 '''
+
+#create logger using configuration
+logging.config.fileConfig('./logging.conf')
+logger = logging.getLogger('pimanlogger')
 
 data_dir = "./install/boot"
 tftp_port = 69
@@ -80,14 +85,14 @@ def reinstall(switch_address, port):
 
 
 def exit_piman():
-    print("Insufficient amount of arguments")
+    logger.error("Insufficient amount of arguments")
     exit(1)
 
 if __name__ == "__main__":
     args = "Arguments: "
     for a in argv:
         args += a + " "
-    print(args)
+    logger.info(args)
 
     if len(argv) < 2:
         exit_piman()
