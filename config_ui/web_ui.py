@@ -41,16 +41,18 @@ def hosts_csv_form_post():
     listOfInputsTimestamp = request.form.getlist('inputsTimestamp')
     with open(hosts_csv_path, "w") as f:
         for i in range(len(listOfInputsMac)):
+            if listOfInputsMac[i] == "" and listOfInputsIp[i] == "" and listOfInputsName[i] == "" and listOfInputsTimestamp[i] == "":
+                continue
             if listOfInputsMac[i]:
                 f.write(listOfInputsMac[i])
             f.write(";")
-            if listOfInputsMac[i]:
+            if listOfInputsIp[i]:
                 f.write(listOfInputsIp[i])
             f.write(";")
-            if listOfInputsMac[i]:
+            if listOfInputsName[i]:
                 f.write(listOfInputsName[i])
             f.write(";")
-            if listOfInputsMac[i]:
+            if listOfInputsTimestamp[i]:
                 f.write(listOfInputsTimestamp[i])
             f.write("\n")
     return render_template("hosts_csv.html")
