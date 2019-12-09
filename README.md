@@ -196,7 +196,7 @@ Finally, add the ```grafana.service``` file or code next to the ```monitoring.se
 
 After, completing the previous step, run 
 ```bash
-ssh -R 80:grafana:8080 ssh.localhost.run
+ssh -R 80:localhost:8080 ssh.localhost.run
 ```
 
 This command makes the ```localhost``` of the VM accessible from outside. After the command, two URLs will be generated. Pick one, you will need it for the following steps.
