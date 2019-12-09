@@ -27,12 +27,7 @@
 
 import sys
 from pysnmp.hlapi import *
-import logging
-import logging.config
-
-#create logger using configuration
-logging.config.fileConfig('./logging.conf')
-logger = logging.getLogger('pimanLogger')
+from piman import logger
 
 def find_port(mac_address, switch_address, vlan_number):
     """

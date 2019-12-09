@@ -2,9 +2,7 @@ from threading import Thread
 from socket import AF_INET, SOCK_STREAM, socket
 from struct import unpack, pack
 import traceback
-import logging
-import logging.config
-# messages recieved from PI
+from piman import logger
 
 RECV_IS_INSTALLED = "IS_INSTALLED"
 RECV_IS_UNINSTALLED = "IS_UNINSTALLED"
@@ -13,10 +11,6 @@ RECV_IS_FORMATTED =  "IS_FORMATTED"
 # message sent to PI
 SEND_BOOT = b"boot\n" + b"EOM\n"
 SEND_FORMAT = b"format\n" + b"EOM\n"
-
-# create logger using configuration
-logging.config.fileConfig('./logging.conf')
-logger = logging.getLogger('pimanlogger')
 
 class TCPServer:
     """

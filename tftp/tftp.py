@@ -7,8 +7,8 @@ from zipfile import ZipFile
 
 import io
 import os
-import logging
-import logging.config
+from piman import logger
+
 """
 This code is modified following Prof. Reed suggestion
 """
@@ -20,9 +20,6 @@ The server is initialized with a data directory, a port, as well as a connection
 Data directory, port and connection address is specified in the configuration file
 (note: sudo must be used if using port 69)
 """
-#create logger using config
-logging.config.fileConfig('./logging.conf')
-logger = logging.getLogger('pimanlogger')
 
 class TFTPServer:
     RRQ_OPCODE = 1
