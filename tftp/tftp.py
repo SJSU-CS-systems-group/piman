@@ -7,6 +7,7 @@ from zipfile import ZipFile
 
 import io
 import os
+from piman import logger
 
 """
 This code is modified following Prof. Reed suggestion
@@ -19,7 +20,6 @@ The server is initialized with a data directory, a port, as well as a connection
 Data directory, port and connection address is specified in the configuration file
 (note: sudo must be used if using port 69)
 """
-
 
 class TFTPServer:
     RRQ_OPCODE = 1
@@ -64,11 +64,9 @@ class TFTPServer:
     def start(self):
         self.server_socket = socket(AF_INET, SOCK_DGRAM)
         # We can specify a specific address when running the server (defaults to '')
-        print("connecting to {}:{}".format(
-            self.connection_address, self.tftp_port))
+        logger.warning("connecting to {}:{}".format(self.connection_address, self.tftp_port))
         self.server_socket.bind((self.connection_address, self.tftp_port))
-        print("serving files from {} on port {}".format(
-            self.data_dir, self.tftp_port))
+        logger.warning("serving files from {} on port {}".format(self.data_dir, self.tftp_port))
         self.tftp_thread = Thread(target=self.__process_requests, name="tftpd")
         self.tftp_thread.start()
 
@@ -81,7 +79,7 @@ class TFTPServer:
         # this while loop keeps our server running also accounting for ensuring the initial
         # data packet is retrieved by the host
         # accepts RRQ's for files and starts a thread to proccess it
-        print("TFTP waiting for request")
+        logger.warning("TFTP waiting for request")
         while True:
 
             pkt, addr = self.server_socket.recvfrom(self.BUFFER_SIZE)
@@ -118,7 +116,7 @@ class TFTPServer:
         # give us an extra empty string at the end, so skip it with [:-1]
         strings_in_RRQ = pkt[2:].split(b"\0")[:-1]
 
-        print("got {} from {}".format(strings_in_RRQ, addr))
+        logger.warning("got {} from {}".format(strings_in_RRQ, addr))
 
         filename = strings_in_RRQ[0]
 
@@ -166,7 +164,7 @@ class TFTPServer:
 
                         # if no data was read, read returns b'', then EOF was reached and download complete
                         else:
-                            print('download complete, closing socket')
+                            logger.warning('download complete, closing socket')
                             client_dedicated_sock.close()
                             break
 
@@ -189,6 +187,7 @@ class TFTPServer:
                         error_opcode = pack("!H", TFTPServer.ERROR_OPCODE)
                         error_code = pack("!H", 21)
                         error_message = b"incorrect TID\0"
+                        logger.error("incorrect TID")
                         packet = error_opcode + error_code + error_message
                         client_dedicated_sock.sendto(packet, addr)
                 else:
@@ -196,6 +195,7 @@ class TFTPServer:
                     error_opcode = pack("!H", TFTPServer.ERROR_OPCODE)
                     error_code = pack("!H", 20)
                     error_message = b"illegal operation specified\0"
+                    logger.error("illegal operation specified")
                     packet = error_opcode + error_code + error_message
                     client_dedicated_sock.sendto(packet, addr)
 
@@ -206,15 +206,16 @@ class TFTPServer:
                         self.BUFFER_SIZE)
 
                 except:
-                    print("Socket Timed Out")
+                    logger.error("Socket Timed Out")
                     client_dedicated_sock.close()
-                    print('closed socket')
+                    logger.error('closed socket')
                     break
         except FileNotFoundError:
             # send an error packet to the requesting host
             error_opcode = pack("!H", TFTPServer.ERROR_OPCODE)
             error_code = pack("!H", 17)
             error_message = b"No such file within the directory\0"
+            logger.error("No such file within the directory")
             packet = error_opcode + error_code + error_message
             client_dedicated_sock.sendto(packet, addr)
             client_dedicated_sock.close()
@@ -223,26 +224,7 @@ class TFTPServer:
         self.tftp_thread.join()
 
 
-"""@click.command()
-@click.option(
-    "--data_dir",
-    default=".",
-    metavar="root_of_files_to_serve",
-    type=click.Path(exists=True, file_okay=False, resolve_path=True),
-    help="the directory to use as the root of the files being served",
-)
-@click.option(
-    "--tftp_port",
-    default=69,
-    metavar="UDP_listening_port",
-    help="the UDP port to listen for tftp client requests",
-)
-@click.option(
-    "--connection_address",
-    default="",
-    metavar="UDP_listening_address",
-    help="the address to listen on for request",
-)"""
+
 
 
 def do_tftpd(data_dir, connection_address, tftp_port):
@@ -250,11 +232,11 @@ def do_tftpd(data_dir, connection_address, tftp_port):
         port and serve data rooted at the specified data. only read
         requests are supported for security reasons.
     """
-    print("Starting TFTP...")
+    logger.warning("Starting TFTP...")
     srvr = TFTPServer(data_dir, tftp_port, connection_address)
     srvr.start()
     srvr.join()
-    print("TFTP is terminating")
+    logger.warning("TFTP is terminating")
 
 
 if __name__ == "__main__":

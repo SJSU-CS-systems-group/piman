@@ -1,4 +1,25 @@
-# import click
+import logging
+import logging.config
+import os
+from zipfile import ZipFile
+import io
+
+
+# create the logger before doing imports since everyone is going
+# to use them
+local_logfile = './logging.conf'
+if os.path.isfile(local_logfile):
+    logging.config.fileConfig(local_logfile)
+else:
+    zipfile = os.path.dirname(__file__)
+    with ZipFile(zipfile) as z:
+        fd = z.open("logging.conf", mode='r')
+        # convert to a string
+        confstr = fd.read().decode()
+        logging.config.fileConfig(io.StringIO(confstr))
+
+#create logger using configuration
+logger = logging.getLogger('pimanlogger')
 
 from threading import Thread
 from sys import argv
@@ -7,8 +28,8 @@ from dhcp import dhcp
 from tcp import tcp
 from tftp import tftp
 from utility import power_cycle
+from piman import logger
 from parse_config import config
-
 
 '''
 piman.py
@@ -80,14 +101,14 @@ def reinstall(switch_address, port):
 
 
 def exit_piman():
-    print("Insufficient amount of arguments")
+    logger.error("Insufficient amount of arguments")
     exit(1)
 
 if __name__ == "__main__":
     args = "Arguments: "
     for a in argv:
         args += a + " "
-    print(args)
+    logger.info(args)
 
     if len(argv) < 2:
         exit_piman()

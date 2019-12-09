@@ -27,6 +27,7 @@
 
 import sys
 from pysnmp.hlapi import *
+from piman import logger
 
 def find_port(mac_address, switch_address, vlan_number):
     """
@@ -47,9 +48,9 @@ def find_port(mac_address, switch_address, vlan_number):
     )
 
     if errorIndication:
-        print(errorIndication)
+        logger.error(errorIndication)
     elif errorStatus:
-        print(
+        logger.error(
             "%s at %s"
             % (
                 errorStatus.prettyPrint(),
@@ -68,7 +69,7 @@ def mac_in_decimal(mac_address):
 
 if __name__ == "__main__":
     if len(sys.argv) != 4:
-        print(
+        logger.info(
             "Usage: '$ python3 findport.py XX:XX:XX:XX:XX:XX SWITCH_ADDRESS VLAN_NUMBER'"
         )
         sys.exit(1)
@@ -81,7 +82,7 @@ if __name__ == "__main__":
       port = find_port(mac_address, switch_address, vlan_number)
       if port is None:
         raise Exception('Oops!')
-      print(port)
+      logger.debug(port)
     except Exception as e:
       # print(e)
-      print("{} not found".format(mac_address))
+      logger.warning("{} not found".format(mac_address))

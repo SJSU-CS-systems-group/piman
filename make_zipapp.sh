@@ -7,7 +7,7 @@ mkdir build/piman.app
     cd build/lib/python*/site-packages
     mv $(ls | grep -v -) ../../../piman.app
 )
-cp -r utility tftp dhcp monitoring tcp *.py build/piman.app
+cp -r logging.conf utility tftp dhcp monitoring tcp *.py build/piman.app
 mkdir build/piman.app/install
 cp -r install/boot build/piman.app/install
 # we don't want crypto stuff since it has native code
