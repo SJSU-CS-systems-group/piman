@@ -2,12 +2,15 @@ import threading
 from flask import Flask, escape, request, render_template, jsonify
 import click
 import os.path
+import yaml
 
 hosts_csv_path = "../hosts.csv"
 config_path = "../.yaml"
 org_name = ""
 
-#remaps .pyz to .app
+# remaps .pyz to .app
+
+
 def get_flask_path():
     flask_path = os.path.dirname(os.path.abspath(__file__))
     if ".pyz" in flask_path:
@@ -16,7 +19,9 @@ def get_flask_path():
     print(flask_path)
     return flask_path
 
+
 app = Flask(__name__, root_path=get_flask_path())
+
 
 @app.route('/')
 def home():
@@ -110,46 +115,11 @@ def get_config():
             f.write("  - switch_0_address: \n")
             f.write("    pi_addresses:" + "\n")
             f.write("      - \n")
-    fileHandler = open(config_path, "r")
-    while True:
-        # Get next line from file
-        line = fileHandler.readline()
-        key, value = line.partition(":")[::2]
-        key = key.replace("-", "")
-        value = value.replace("-", "")
-        switches_arr = []
-        if not line:
-            break
-        if "switches" in key:
-            while True:
-                temp_line = fileHandler.readline()
-                if "switch" in temp_line:
-                    val1, val2 = temp_line.partition(":")[::2]
-                    val1 = val1.replace("-", "")
-                    val2 = val2.replace("-", "")
-                    tempDict = {}
-                    tempDict[val1.strip()] = val2.strip()
-                    temp_line = fileHandler.readline()
-                    val1, val2 = temp_line.partition(":")[::2]
-                    val1 = val1.replace("-", "")
-                    val2 = val2.replace("-", "")
-                    tempDict[val1.strip()] = []
-                    while True:
-                        last_pos = fileHandler.tell()
-                        pi_line = fileHandler.readline()
-                        if "switch" in pi_line or not pi_line:
-                            fileHandler.seek(last_pos)
-                            break
-                        pi_line = pi_line.replace("-", "")
-                        tempDict["pi_addresses"].append(pi_line.strip())
-                    switches_arr.append(tempDict)
-                config_file_read["switches"] = switches_arr
-                if not temp_line:
-                    break
-        else:
-            config_file_read[key.strip()] = value.strip()
-    fileHandler.close()
-    return jsonify(config_file_read)
+
+    with open(config_path, 'r') as f:
+        doc = yaml.load(f)
+
+    return doc
 
 
 '''
