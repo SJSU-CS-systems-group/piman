@@ -37,10 +37,10 @@
           url: "/get_hosts_csv"
         })
           .done(function(content) {
-            $("#inputboxes").append("<input type='submit' />");
             $("#inputboxes").append(
               "<input type='button' style='margin:10px;' value='Add Pi' onclick='addPi()' />"
             );
+            $("#inputboxes").append("<input type='submit' value='Apply Changes'/>");
             $("#labels").append(
               "<li style='text-decoration: underline; margin-top:53px'>In file:</li>"
             );
@@ -221,6 +221,8 @@
         <span class="w3-large">Hosts.csv settings</span>
         <br />
         <span class="w2-large">Remove text in textbox to delete entry.</span>
+	<b>Restart PiMan after clicking 'Apply Changes' for new configuration to take effect.</b>
+	<br>
         <div class="row">
           <div class="column">
             <ui style="list-style: none;">
