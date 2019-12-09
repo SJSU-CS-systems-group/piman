@@ -24,13 +24,13 @@ logger = logging.getLogger('pimanlogger')
 from threading import Thread
 from sys import argv
 
+from config_ui import web_ui
 from dhcp import dhcp
 from tcp import tcp
 from tftp import tftp
 from utility import power_cycle
 from piman import logger
 from parse_config import config
-
 '''
 piman.py
 
@@ -73,16 +73,25 @@ mac_ip_file = "hosts.csv"
 lease_time = 600
 interface = config['interface']
 
+
 def server():
-    tftp_thread = Thread(target=tftp.do_tftpd, args=[data_dir, ip, tftp_port], name="tftpd")
+    config_ui_thread = Thread(target=config_ui, args=[
+                              "", "./.yaml", "./hosts.csv"], name="config_ui")
+    config_ui_thread.start()
+
+    tftp_thread = Thread(target=tftp.do_tftpd, args=[
+                         data_dir, ip, tftp_port], name="tftpd")
     tftp_thread.start()
 
-    dhcp_thread = Thread(target=dhcp.do_dhcp, args=[mac_ip_file, subnet_mask, ip, lease_time, interface], name="dhcpd")
+    dhcp_thread = Thread(target=dhcp.do_dhcp, args=[
+                         mac_ip_file, subnet_mask, ip, lease_time, interface], name="dhcpd")
     dhcp_thread.start()
 
-    tcp_thread = Thread(target=tcp.do_tcp, args=[data_dir, tcp_port, ip], name="tcp")
+    tcp_thread = Thread(target=tcp.do_tcp, args=[
+                        data_dir, tcp_port, ip], name="tcp")
     tcp_thread.start()
 
+    config_ui_thread.join()
     tftp_thread.join()
     dhcp_thread.join()
     tcp_thread.join()
@@ -99,6 +108,8 @@ def reinstall(switch_address, port):
         f.write(network_addr+str(port))
     power_cycle.power_cycle(switch_address, port)
 
+def config_ui(name, config_path, hosts_csv_path):
+    web_ui.start(name, config_path, hosts_csv_path)
 
 def exit_piman():
     logger.error("Insufficient amount of arguments")
@@ -123,3 +134,5 @@ if __name__ == "__main__":
         if len(argv) < 3:
             exit_piman()
         reinstall(argv[2], argv[3])
+    elif argv[1] == "config":
+        config_ui(argv[2], argv[3], argv[4])

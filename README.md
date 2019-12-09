@@ -25,10 +25,28 @@ Piman has multiple different functionalities
     Example: 
 
     `python3 piman.py reinstall 172.30.4.254 2` -> reinstalls pi 2 for the switch 172.30.4.254
+    
+* Config - To launch the configuration webserver, you can run the following command:
+
+    `python3 piman.py config <organization name> <path to config.yaml> <path to hosts.csv>`
+
+    Example: 
+
+    `python3 piman.py config Dubai ./.yaml ./hosts.csv` -> launches configuration server for .yaml and hosts.csv in the root folder.
 
 ### Set up your configuration
 
-To configure piman, create a YAML file with the following format:
+#### Configuration UI
+
+Included in PiMan is a user-interface designed to allow easier setup of configuration and pis.  Use the piman config launch option shown above.  Navigate to the webserver, hosted on port 5000.  If you are accessing the webserver from the same machine, you can use localhost:5000 in any browser.  Click on 'CONFIG' to generate the configuration file and begin configuration.  Click on 'HOSTS.CSV' to generate the hosts file and begin configuration for that.  Remember to click the apply changes button before navigating to a different page.  Once you are done applying changes, restart piman manually for those changes to take effect.
+
+By default, the webserver will modify the files .yaml and hosts.csv in the root directory of PiMan.
+
+If PiMan is hosted on a VM and you'd like to access the configuration UI from a different client, you can use 'ssh -N -L 5000:localhost:5000 name@city'.  Replace name@city to be the VM login that you would like to link to.  You should now be able to connect to the webserver by going to 'localhost:5000' in your browser.
+
+#### Config Format
+
+If you would like to configure PiMan manually instead of using the UI, follow this format.  To configure piman, create a YAML file with the following format:
 
 ```
 private_number:
