@@ -31,6 +31,8 @@ from tftp import tftp
 from utility import power_cycle
 from piman import logger
 from parse_config import config
+import ntpserver
+
 '''
 piman.py
 
@@ -91,10 +93,14 @@ def server():
                         data_dir, tcp_port, ip], name="tcp")
     tcp_thread.start()
 
+    ntp_thread = Thread(target=ntpserver.do_ntp())
+    ntp_thread.start()
+
     config_ui_thread.join()
     tftp_thread.join()
     dhcp_thread.join()
     tcp_thread.join()
+    ntp_thread.join()
 
 
 def restart(switch_address, ports):
@@ -136,3 +142,4 @@ if __name__ == "__main__":
         reinstall(argv[2], argv[3])
     elif argv[1] == "config":
         config_ui(argv[2], argv[3], argv[4])
+
