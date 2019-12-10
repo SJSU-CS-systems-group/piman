@@ -530,7 +530,7 @@ class DHCPServer(object):
             try:
                 self.update(1)
             except KeyboardInterrupt:
-                logger.error("keyboard interrupt")
+                logger.exception(“keyboard interrupt”)
                 break
             except:
                 logger.error(traceback.print_exc())
