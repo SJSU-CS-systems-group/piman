@@ -259,6 +259,9 @@ class DHCPServerConfiguration(object):
         self.ip_address_lease_time = lease_time
         self.net_inter_name = net_inter
         self.network = network_from_ip_subnet(ip, subnet_mask)
+        self.router = ip
+        self.domain_name_server = ['8.8.8.8'] # list of IPs
+        self.network_time_protocol_servers = [ip]
 
     def load(self, file):
         with open(file) as f:
