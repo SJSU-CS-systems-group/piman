@@ -47,7 +47,7 @@ class TCPServer:
             tcp_file_thread.start()
 
         except KeyboardInterrupt:
-            logger.error("keyboard interrupt - socket closed")
+            logger.exception("keyboard interrupt")
             self.tcp_socket.close()
             self.tcp_file_socket.close()
 
@@ -63,7 +63,7 @@ class TCPServer:
                 self.threads.append(tcp_thread)
                 tcp_thread.start()
         except KeyboardInterrupt:
-            logger.error("keyboard interrupt - closing tcp socket")
+            logger.exception("keyboard interrupt")
             self.tcp_socket.close()
 
     
@@ -78,7 +78,7 @@ class TCPServer:
                 self.threads.append(tcp_file_thread)
                 tcp_file_thread.start()
         except KeyboardInterrupt:
-            logger.error("keyboard interrupt - tcp file socket is closing")
+            logger.exception("keyboard interrupt")
             self.tcp_file_socket.close()
 
 
