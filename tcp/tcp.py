@@ -47,6 +47,7 @@ class TCPServer:
             tcp_file_thread.start()
 
         except KeyboardInterrupt:
+            logger.error("keyboard interrupt - socket closed")
             self.tcp_socket.close()
             self.tcp_file_socket.close()
 
@@ -62,6 +63,7 @@ class TCPServer:
                 self.threads.append(tcp_thread)
                 tcp_thread.start()
         except KeyboardInterrupt:
+            logger.error("keyboard interrupt - closing tcp socket")
             self.tcp_socket.close()
 
     
@@ -76,6 +78,7 @@ class TCPServer:
                 self.threads.append(tcp_file_thread)
                 tcp_file_thread.start()
         except KeyboardInterrupt:
+            logger.error("keyboard interrupt - tcp file socket is closing")
             self.tcp_file_socket.close()
 
 
@@ -84,31 +87,31 @@ class TCPServer:
         This function serves the control socket's coming requests.
         """
         try:
-            logger.warning("serving client from: {}".format(client_addr))    
+            logger.info("serving client from: {}".format(client_addr))
             fd = client_socket.makefile()
             req = fd.readline()
             while req:    
                 req = req.strip()
                 logger.debug("TCP - recieved request {}".format(req))
                 if req == RECV_IS_UNINSTALLED:
-                    logger.warning("TCT - uninstalled, sending format")
+                    logger.info("TCT - uninstalled, sending format")
                     client_socket.send(SEND_FORMAT) #  this line of code is suggested by team fire
                 elif req == RECV_IS_INSTALLED:
                     if client_addr[0] in []:
-                        logger.warning("TCP - need to reinstall, sending format")
+                        logger.info("TCP - need to reinstall, sending format")
                         client_socket.send(SEND_FORMAT)
                     else:
-                        logger.warning("TCP - installed, sending boot")
+                        logger.info("TCP - installed, sending boot")
                         client_socket.send(SEND_BOOT)        
                 elif req == RECV_IS_FORMATTED:
-                    logger.warning("TCP - is formatted, sending file")
+                    logger.info("TCP - is formatted, sending file")
                     break
                 else:
                     pass
                     #print("TCP - not supported request")
                 req = fd.readline()
         except:
-            logger.debug(traceback.print_exc())
+            logger.error(traceback.print_exc())
         client_socket.close()
 
 
@@ -116,7 +119,7 @@ class TCPServer:
         """
         This function serves the file socket's coming requests.
         """
-        logger.warning("TCP - started file_transferring")
+        logger.info("TCP - started file_transferring")
         try:
             # opens the specified file in a read only binary form
             transfer_file = open("{}/{}".format(self.data_dir, "rootfs.tgz"), "rb")
@@ -131,7 +134,7 @@ class TCPServer:
         except:
             logger.error(traceback.print_exc())
 
-        logger.warning("TCP - finished file_transferring")
+        logger.info("TCP - finished file_transferring")
         client_socket.close()
 
 
@@ -144,7 +147,7 @@ def do_tcp(data_dir, tcp_port, connection_address):
         port and serve data rooted at the specified data. only read
         requests are supported for security reasons.
     """
-    logger.warning("tcp running...")
+    logger.info("tcp running...")
     srvr = TCPServer(data_dir, tcp_port, connection_address)
     srvr.start()
     srvr.join()
