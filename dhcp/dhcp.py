@@ -427,6 +427,7 @@ class DHCPServer(object):
             reads = select.select([self.socket], [], [], timeout)[0]
         except ValueError:
             # ValueError: file descriptor cannot be a negative integer (-1)
+            logger.error("Value error: file descriptor cannot be a negative integer")
             return
         for socket in reads:
             try:
@@ -434,6 +435,7 @@ class DHCPServer(object):
                 # print(packet)
             except OSError:
                 # OSError: [WinError 10038] An operation was attempted on something that is not a socket
+                logger.error("OSError - operation was attempted on something that is not a socket")
                 pass
             else:
                 self.received(packet)
@@ -528,8 +530,10 @@ class DHCPServer(object):
             try:
                 self.update(1)
             except KeyboardInterrupt:
+                logger.error("keyboard interrupt")
                 break
             except:
+                logger.error(traceback.print_exc())
                 traceback.print_exc()
 
 # Produces a list of inet addresses associated with the local host.
@@ -618,7 +622,7 @@ def do_dhcp(hosts_file, subnet_mask, ip, lease_time, net_inter):
     server = DHCPServer(configuration)
     for ip in server.configuration.all_ip_addresses():
         assert ip == server.configuration.network_filter()
-    logger.warning("DHCP server is running...")
+    logger.info("DHCP server is running...")
     server.run()
     
 if __name__ == '__main__':
