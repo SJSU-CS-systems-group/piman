@@ -16,13 +16,15 @@ class Pimon(Resource):
         memory_percent = psutil.virtual_memory()[2]
         disk_percent = psutil.disk_usage('/')[3]
         num_pids = len(psutil.pids())
+        temperature = psutil.sensors_temperatures().get('cpu-thermal')[0][1]
 
         event = {
-            "time": time.time(),
+            "time": time.ctime(),
             "cpu_percent":    cpu_percent,
             "memory_percent": memory_percent,
             "disk_percent":   disk_percent,
             "num_pids":       num_pids,
+            "temp":           temperature,
         }
         events.append(event)
         return event, 200

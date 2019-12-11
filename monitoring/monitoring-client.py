@@ -22,7 +22,7 @@ log_path = ""
 
 def alert(data):
     print_to_file(data)
-    url = monitor_config['DEFAULT']['slack']
+    url = config['DEFAULT']['slack']
     headers = {'Content-type': 'application/json'}
     try:
         r = requests.post(
@@ -36,13 +36,14 @@ def alert(data):
 
 
 def pretty_stats(ip, event):
-    return "---- From {} ---- \n Time: {} \n CPU load: {} \n RAM usage: {} \n Disk usage: {} \n # of PIDs: {} \n".format(
+    return "---- From {} ---- \n Time: {} \n CPU load: {} \n RAM usage: {} \n Disk usage: {} \n # of PIDs: {} \n Temperature: {} F \n".format(
             ip,
             event['time'], 
             event['cpu_percent'],
             event['memory_percent'],
             event['disk_percent'],
             event['num_pids'],
+            event['temp'],
         )
 
 
@@ -53,7 +54,7 @@ def get_status(pi_ip):
 
 
 def check_response(response_dict, pi):
-    if response_dict['cpu_percent'] > float(monitor_config['DEFAULT']['cpu_threshold']):
+    if response_dict['cpu_percent'] > float(config['DEFAULT']['cpu_threshold']):
         alert("CPU beyond threshold on pi@{}".format(pi))
     if response_dict['memory_percent'] > float(monitor_config['DEFAULT']['mem_threshold']):
         alert("Memory beyond threshold on pi@{}".format(pi))
@@ -61,11 +62,12 @@ def check_response(response_dict, pi):
         alert("Disk Usage beyond threshold on pi@{}".format(pi))
     if response_dict['num_pids'] > int(monitor_config['DEFAULT']['pids_threshold']):
         alert("Number of PID's beyond threshold on pi@{}".format(pi))
-
+    if response_dict['temp'] > float(config['DEFAULT']['temperature_threshold']):
+        alert("Temperature beyond threshold on pi@{}".format(pi))
 
 def print_to_file(data):
     with open(log_path, "a") as f:
-        f.write("{} - {} \n".format(time.time(), data))
+        f.write("{} - {} \n".format(time.ctime(), data))
 
 
 def _main():
@@ -73,7 +75,9 @@ def _main():
 
     # Main loop, polls the 9 pis then waits
     while True:
-        for ip in ips:
+        for i in range(11,21):
+            ip = "172.30.1.{}".format(i)
+            r = None
             try:
                 print_to_file("Sending HTTP-GET to pi@{}".format(ip))
                 r = get_status(ip)
@@ -96,7 +100,7 @@ if __name__ == "__main__":
         print("Please give path to config file and/or log path")
 
     # read config
-    monitor_config.read(argv[1])
-    log_path = argv[2] if len(argv) == 3 and argv[2] else "/home/pi/pi-manager-ice/logs/monitor.log"
+    config.read(argv[1])
+    log_path = argv[2] if len(argv) == 3 and argv[2] else "logs/monitor.log"
 
     _main()
