@@ -47,6 +47,7 @@ class TFTPServer:
             with ZipFile(zipfile) as z:
                 fd = z.open("install/boot/" + name)
         except KeyError:
+            logger.error("key error - looking in filesystem next")
             pass  # we'll try looking in the filesystem next
         if not fd:
             fd = open("{}/{}".format(self.data_dir, name), "rb")
@@ -64,9 +65,9 @@ class TFTPServer:
     def start(self):
         self.server_socket = socket(AF_INET, SOCK_DGRAM)
         # We can specify a specific address when running the server (defaults to '')
-        logger.warning("connecting to {}:{}".format(self.connection_address, self.tftp_port))
+        logger.info("connecting to {}:{}".format(self.connection_address, self.tftp_port))
         self.server_socket.bind((self.connection_address, self.tftp_port))
-        logger.warning("serving files from {} on port {}".format(self.data_dir, self.tftp_port))
+        logger.info("serving files from {} on port {}".format(self.data_dir, self.tftp_port))
         self.tftp_thread = Thread(target=self.__process_requests, name="tftpd")
         self.tftp_thread.start()
 
@@ -79,7 +80,7 @@ class TFTPServer:
         # this while loop keeps our server running also accounting for ensuring the initial
         # data packet is retrieved by the host
         # accepts RRQ's for files and starts a thread to proccess it
-        logger.warning("TFTP waiting for request")
+        logger.info("TFTP waiting for request")
         while True:
 
             pkt, addr = self.server_socket.recvfrom(self.BUFFER_SIZE)
@@ -116,7 +117,7 @@ class TFTPServer:
         # give us an extra empty string at the end, so skip it with [:-1]
         strings_in_RRQ = pkt[2:].split(b"\0")[:-1]
 
-        logger.warning("got {} from {}".format(strings_in_RRQ, addr))
+        logger.info("got {} from {}".format(strings_in_RRQ, addr))
 
         filename = strings_in_RRQ[0]
 
