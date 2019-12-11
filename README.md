@@ -618,6 +618,7 @@ soccket and open up another socket to receive data from the client, it times thi
 
 If testing you can type 'sudo /etc/init.d/ntp restart' on the pi to have the client to instantly send a ntp message to the server.
 
+Another part of NTP is that in TCP for every connection, the current time is recorded and sent in a busybox date -s command to hello protocol. It will be caught in a case and the pi during its boot process will run the command and set it's time. This is just to get the pi to a close current time incase NTP does not run.
 
 ## **Additional Notes**   
 ---
@@ -655,4 +656,3 @@ The following steps need to be followed in order.
         You may want to update the directory path of piman.py under ExecStart if you make changes to piman.py.
     
 * To test if a pi successfully booted up, ping the ip address it was assigned. Alternatively, ssh into that ip_address. *
-

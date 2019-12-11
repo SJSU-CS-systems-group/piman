@@ -104,6 +104,10 @@ do
         exit 0
         break
         ;;
+    "busybox date "*)
+        send "RECEIVED DATE"
+        $req
+        ;;
     format)
         format
         cd /m
