@@ -24,7 +24,11 @@ def restart(switch_address, ports):
 @click.argument('port')
 def reinstall(switch_address, port):
     piman.reinstall(switch_address, port)
-
+    
+@cli.command()
+@click.argument('port', nargs = -1)
+def mapper(port):
+    piman.mapper(port)
 
 @cli.command()
 def power_cycle():

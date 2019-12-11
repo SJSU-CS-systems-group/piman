@@ -113,6 +113,13 @@ def reinstall(switch_address, port):
         network_addr = ip[:-1]
         f.write(network_addr+str(port))
     power_cycle.power_cycle(switch_address, port)
+    
+def mapper(port):
+    for portNum in port:
+        power_cycle.power_cycle(portNum)
+
+    time.sleep(10)
+    mac_mapper.mac_mapper()
 
 def config_ui(name, config_path, hosts_csv_path):
     web_ui.start(name, config_path, hosts_csv_path)
@@ -136,6 +143,10 @@ if __name__ == "__main__":
         if len(argv) < 3:
             exit_piman()
         restart(argv[2], argv[3:])
+    elif argv[1] == "mapper":
+        if len(argv) < 3:
+            exit_piman()
+        mapper(argv[2])
     elif argv[1] == "reinstall":
         if len(argv) < 3:
             exit_piman()
