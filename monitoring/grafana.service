@@ -1,0 +1,14 @@
+[Unit]
+Description=Raspberry Pi Monitoring Grafana Manager
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/usr/bin/piman/monitoring
+ExecStart=/usr/bin/piman/monitoring/grafana.sh
+Restart=on-failure
+RestartSec=15
+User=root
+
+[Install]
+WantedBy=multi-user.target

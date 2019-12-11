@@ -2,8 +2,7 @@ from threading import Thread
 from socket import AF_INET, SOCK_STREAM, socket
 from struct import unpack, pack
 import traceback
-
-# messages recieved from PI
+from piman import logger
 
 RECV_IS_INSTALLED = "IS_INSTALLED"
 RECV_IS_UNINSTALLED = "IS_UNINSTALLED"
@@ -12,7 +11,6 @@ RECV_IS_FORMATTED =  "IS_FORMATTED"
 # message sent to PI
 SEND_BOOT = b"boot\n" + b"EOM\n"
 SEND_FORMAT = b"format\n" + b"EOM\n"
-
 
 class TCPServer:
     """
@@ -49,6 +47,7 @@ class TCPServer:
             tcp_file_thread.start()
 
         except KeyboardInterrupt:
+            logger.exception("keyboard interrupt")
             self.tcp_socket.close()
             self.tcp_file_socket.close()
 
@@ -64,6 +63,7 @@ class TCPServer:
                 self.threads.append(tcp_thread)
                 tcp_thread.start()
         except KeyboardInterrupt:
+            logger.exception("keyboard interrupt")
             self.tcp_socket.close()
 
     
@@ -78,6 +78,7 @@ class TCPServer:
                 self.threads.append(tcp_file_thread)
                 tcp_file_thread.start()
         except KeyboardInterrupt:
+            logger.exception("keyboard interrupt")
             self.tcp_file_socket.close()
 
 
@@ -86,29 +87,31 @@ class TCPServer:
         This function serves the control socket's coming requests.
         """
         try:
-            print("serving client from: {}".format(client_addr))    
-            req = client_socket.recv(1024)
+            logger.info("serving client from: {}".format(client_addr))
+            fd = client_socket.makefile()
+            req = fd.readline()
             while req:    
-                req = req.decode("ASCII").strip()
-                print("TCP - recieved request {}".format(req))
+                req = req.strip()
+                logger.debug("TCP - recieved request {}".format(req))
                 if req == RECV_IS_UNINSTALLED:
-                    print("TCT - uninstalled, sending format")
+                    logger.info("TCT - uninstalled, sending format")
                     client_socket.send(SEND_FORMAT) #  this line of code is suggested by team fire
                 elif req == RECV_IS_INSTALLED:
                     if client_addr[0] in []:
-                        print("TCP - need to reinstall, sending format")
+                        logger.info("TCP - need to reinstall, sending format")
                         client_socket.send(SEND_FORMAT)
                     else:
-                        print("TCP - installed, sending boot")
+                        logger.info("TCP - installed, sending boot")
                         client_socket.send(SEND_BOOT)        
                 elif req == RECV_IS_FORMATTED:
-                    print("TCP - is formatted, sending file")
+                    logger.info("TCP - is formatted, sending file")
                     break
                 else:
-                    print("TCP - not supported request")
-                req = client_socket.recv(1024)
+                    pass
+                    #print("TCP - not supported request")
+                req = fd.readline()
         except:
-            traceback.print_exc()
+            logger.error(traceback.print_exc())
         client_socket.close()
 
 
@@ -116,22 +119,22 @@ class TCPServer:
         """
         This function serves the file socket's coming requests.
         """
-        print("TCP - started file_transferring")
+        logger.info("TCP - started file_transferring")
         try:
             # opens the specified file in a read only binary form
             transfer_file = open("{}/{}".format(self.data_dir, "rootfs.tgz"), "rb")
             data = transfer_file.read()
-            print("TCP - read rootfs.tgz")
+            logger.debug("TCP - read rootfs.tgz")
 
             if data:
                 # send the data
-                print("TCP - sending rootfs.tgz")
+                logger.debug("TCP - sending rootfs.tgz")
                 client_socket.send(data)
-                print("TCP - finished sending rootfs.tgz")
+                logger.debug("TCP - finished sending rootfs.tgz")
         except:
-            traceback.print_exc()
+            logger.error(traceback.print_exc())
 
-        print("TCP - finished file_transferring")
+        logger.info("TCP - finished file_transferring")
         client_socket.close()
 
 
@@ -144,7 +147,7 @@ def do_tcp(data_dir, tcp_port, connection_address):
         port and serve data rooted at the specified data. only read
         requests are supported for security reasons.
     """
-    print("tcp running...")
+    logger.info("tcp running...")
     srvr = TCPServer(data_dir, tcp_port, connection_address)
     srvr.start()
     srvr.join()

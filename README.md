@@ -1,26 +1,29 @@
-# **Raspberry Pi Manager** 
+# **Raspberry Pi Manager (Piman) / Raspberry Pi Network Management Software** 
 This repository will contain the project work done by the members of Team Budapest throughout the course of the Fall 2019 semester in CS158B. Throughout the documentation, there will be files and folders referenced, but they will be referred to as if you are currently located in the ***root*** directory of this repository.     
-Note: The original notes left behind by the originator, Team Ice from Fall 2018, will be kept as documentation and has been moved to [Additional Notes](##Additional-Notes) because documentation is important.      
+Note: The original notes left behind by the originator, Team Ice from Fall 2018, will be kept as documentation and has been moved to [Additional Notes](##Additional-Notes) because documentation is important, or has been moved to the appropriate sections through this README.      
 
 ## **Table of Contents**      
 [Purpose and Background](##Purpose-and-Background)   
 [Issues](##Issues)   
-[Setting Up Your Environment](##Setting-Up-Your-Environment)   
-[Quick-Start Guide](##Quick-Start-Guide)
-[.env](##env)
-[config.py](##config.py)   
-[config.ini](##config.ini)   
+[A Note To Our Readers](##A-Note-To-Our-Readers...)
+[Set Up Your Configurations](##Set-up-your-configurations)   
+[Quick-Start Guide](##Quick-Start-Guide)  
 [piman.py](##piman.py)   
 [Utility](##Utility)   
 1) [findport.py](###findport.py)       
-2) [power_cycle.py](###power_cycle.py)          
+2) [power_cycle.py](###power_cycle.py)   
 
+[About the OID...](##About-the-OID...)
 [DHCP](##DHCP)    
 [TFTP](##TFTP)  
 [TCP](##TCP)   
 [hello_protocol.sh](##hello_protocol.sh)   
 [make_zippapp.sh](##make_zippapp.sh)   
 [Monitoring](##Monitoring)   
+[Configuration and Alerts](##Configuration-and-Alerts)
+[Grafana Dashboard](##Grafana-Dashboard)    
+[Logs](##Logs)   
+[NTP Server](##NTP-Server)   
 [Additional Notes](##Additional-Notes)   
 
 
@@ -45,7 +48,7 @@ We recommend you try to run through the code and to see the different parts of t
 Port 1, 2, 3, 4, 5, and 6 all boot properly
 Ephemeral ports also led to a side problem that could be a simple fix, but we couldn't figure out the issue. (see Non-Piman notes #6)     
 
-## **Setting Up Your Environment**
+## **A Note to Our Readers...**
 ---
 Before you even think of executing or testing the program, make sure you have your dependencies installed. The `make_zipapp.sh` creates the dependencies for you in the `build/` directory; however, if you're just running the `piman.py` you'll have to install a few things. We are assuming that python 3.7 < higher is installed. Be careful what version you install your dependencies, because Linux virtual machines tend to have both python2 and python3. Here are the commands you should execute in sequential order:        
 What to do:    
@@ -62,20 +65,68 @@ pip install click # fortunately these dependencies don't have a specific version
 pip install pysnmp
 pip install python-dotenv
 ```
-    
-   
-
-## **config.ini**
+## **Set up your configuration**
 ---
-The following file is the only file you will need to update (no need to update the code files)
-The files contains:
-Section [hardcoded]
-and Options
-[ip, router, switchAddress, reinstall]
-These values should be changed to the appropriate value for your group. The code files will retrieve the variables and values from this document.
+### Configuration UI
 
-## **config.py**
-The following module has the method to help other modules read the value in config.ini.    
+Included in PiMan is a user-interface designed to allow easier setup of configuration and pis.  Use the piman config launch option shown above.  Navigate to the webserver, hosted on port 5000.  If you are accessing the webserver from the same machine, you can use localhost:5000 in any browser.  Click on 'CONFIG' to generate the configuration file and begin configuration.  Click on 'HOSTS.CSV' to generate the hosts file and begin configuration for that.  Remember to click the apply changes button before navigating to a different page.  Once you are done applying changes, restart piman manually for those changes to take effect.
+
+By default, the webserver will modify the files .yaml and hosts.csv in the root directory of PiMan.
+
+If PiMan is hosted on a VM and you'd like to access the configuration UI from a different client, you can use 'ssh -N -L 5000:localhost:5000 name@city'.  Replace name@city to be the VM login that you would like to link to.  You should now be able to connect to the webserver by going to 'localhost:5000' in your browser.
+
+### Config Format
+
+If you would like to configure PiMan manually instead of using the UI, follow this format.  To configure piman, create a YAML file with the following format:
+
+```
+private_number:
+server_address:
+subnet_mask:
+interface: 
+switch_count:
+switches:
+  - swtich_0_address:
+    pi_addresses:
+      -
+      -
+      -
+  - swtich_1_address:
+    pi_addresses:
+      -
+      -
+  .
+  .
+  . 
+```
+
+For example:
+```
+private_number: 4
+server_address: 172.30.4.1
+subnet_mask: 255.255.255.0
+interface: ens4
+switch_count: 2
+switches:
+  - swtich_0_address: 172.30.4.254
+    pi_addresses:
+      - 172.30.4.13
+      - 172.30.4.14
+      - 172.30.4.15
+      - 172.30.4.16
+      - 172.30.4.17
+      - 172.30.4.18
+      - 172.30.4.19
+      - 172.30.4.20
+  - swtich_1_address: 172.30.4.128
+    pi_addresses:
+      - 172.30.4.1
+      - 172.30.4.2
+      - 172.30.4.3
+      - 172.30.4.4
+      - 172.30.4.5
+      - 172.30.4.6
+```
 
 ## **piman.py**
 ---
@@ -107,19 +158,12 @@ To do this `piman.py` is designed to use DHCP, TCP, and TFTP protocols to give t
 These protocols need to be active in order to communicate with the pi's remotely, which is why `piman.py` is implemented as a server.  
 
 ### How does it work?
+    `python3 piman.py restart <switch number> [list of pi_numbers]`
 
-Before actually performing any functions, `piman.py` will gather some parameters from a configuration file called `config.py`:  
-```python
-ip = config.PI_NET_ADDR
-data_dir = "./install/boot"
-tftp_port = int(config.TFTP_PORT)
-tcp_port = int(config.TCP_PORT)
-subnet_mask = config.SUBNET
-mac_ip_file = "hosts.csv"
-```
-For more information, see the README for `config.py`.  
+    `python3 piman.py restart 172.30.4.254 2 3 4` -> restarts pi 2, 3, and 4 for the switch 172.30.4.254 
+    `python3 piman.py reinstall <switch number> [pi_number]`
 
-### There are 3 functions that exist to implement the functionalities described in the "what is piman" header.
+### There are 4 functions that exist to implement the functionalities described in the "what is piman" header.
 
 #### Running the server
 ```python
@@ -137,31 +181,25 @@ def server():
     dhcp_thread.join()
     tcp_thread.join()
 ```
-This function will initiate threads for each of the DHCP, TCP, and TFTP protocols.  
-The '&' will ensure that the threads will run in the background.  
-This function should be called 1st because network booting relies on these protocols.    
-For more information about the implementation of the protocols, see their respective READMEs.  
-
   
 #### Restarting a raspberry pi  
 ```python
-def restart(ports):
+def restart(switch_address, ports):
     for port in ports:
-        power_cycle.power_cycle(port)
+        power_cycle.power_cycle(switch_address, port)
 ```
 This function will turn the pi on the specified port off and then on.  
 Although the implementation makes it seem like you can restart multiple pi's at once, it is recommended to restart them 1 at a time.  
-`/utility/power_cycle.py` is used to turn the pi off or on. For more imformation of `power_cycle.py`, see its README.  
+`utility/power_cycle.py` is used to turn the pi off or on. For more imformation of `power_cycle.py`, see its README.  
 
   
 #### Reinstalling a raspberry pi
 ```python
-def reinstall(port):
-    ip_range = str(ip)
-    ip_range = ".".join(ip_range.split('.')[0:-1]) + '.'
-    with open("reinstall.txt", "w") as f:
-        f.write(ip_range + "{}".format(port))
-    power_cycle.power_cycle(port)
+def reinstall(switch_address, port):
+    with open("/tcp/reinstall.txt", "w") as f:
+        network_addr = ip[:-1]
+        f.write(network_addr+str(port))
+    power_cycle.power_cycle(switch_address, port)
 ```
 This function will reinstall the pi on the specified port.  
 The reinstallation process uses `/utility/power_cycle.py` to turn the pi at the port off and then on before attempting to perform a  
@@ -172,29 +210,27 @@ To perform a network boot, the DHCP, TCP, and TFTP threads should be running.
 #### There is a 4th function to handle input errors on the command line on the terminal
 ```python
 def exit_piman():
-    print("Insufficient amount of arguments")
+    logger.error("Insufficient amount of arguments")
     exit(1)
 ```
-The input errors that are to be detected are described in __main__
+
 ```python
-if len(argv) < 2:
-        power_cycle.power_cycle(10)
-        server()
-        exit()
+    if len(argv) < 2:
+        exit_piman()
 
     if argv[1] == "server":
         server()
     elif argv[1] == "restart":
         if len(argv) < 3:
             exit_piman()
-        restart(argv[2])
+        restart(argv[2], argv[3:])
     elif argv[1] == "reinstall":
         if len(argv) < 3:
             exit_piman()
-        reinstall(argv[2])
-    else: 
-        power_cycle.power_cycle(10)
-        server()
+        reinstall(argv[2], argv[3])
+    elif argv[1] == "config":
+        config_ui(argv[2], argv[3], argv[4])
+
 ```    
 
 ## **Utility**
@@ -246,7 +282,7 @@ result = varBinds[0].prettyPrint()
 return result.split(" = ")[1]
 ```
    
-### power_cycle.py     
+## **power_cycle.py**     
 ### What is power_cycle.py?
 
 `power_cycle.py` is a script that will turn the raspberry pi at a specified port off and then on.  
@@ -270,9 +306,10 @@ def power_cycle(port):
     turn_on(port)
 ```
 Which will call 2 other functions in sequence.  
+The turn_off function will turn off the pi at the specified port.  
 
-```python
 def turn_off(port):
+```python
     print("Power_Cycle - Setting pi at port {} to OFF".format(port))
     errorIndication, errorStatus, errorIndex, varBinds = next(
         setCmd(
@@ -286,8 +323,7 @@ def turn_off(port):
         )
     )
 ```
-The turn_off function will turn off the pi at the specified port.  
-
+The turn_on function will turn on the pi at the specified port  
 ```python
 def turn_on(port):
     print("Power_Cycle - Setting pi at port {} to ON".format(port))
@@ -303,9 +339,9 @@ def turn_on(port):
         )
     )
 ```
-The turn_on function will turn on the pi at the specified port  
 
-#### About the OID...
+## **About the OID...**
+---   
 The OID "1.3.6.1.2.1.105.1.1.1.3.1.x" where x is a specified port will serve as the trigger to turn the pi off or on.  
 Using snmpwalk, you can find the INTEGER values of each port:
 ```bash
@@ -323,17 +359,36 @@ iso.3.6.1.2.1.105.1.1.1.3.1.9 = INTEGER: 1
 If the value is 1: the pi will be turned on.  
 If the value is 2: the pi will be turned off.     
 
+    `python3 piman.py reinstall 172.30.4.254 2` -> reinstalls pi 2 for the switch 172.30.4.254
+    
+* Config - To launch the configuration webserver, you can run the following command:
+
+    `python3 piman.py config <organization name> <path to config.yaml> <path to hosts.csv>`
+
+    Example: 
+
+    `python3 piman.py config Dubai ./.yaml ./hosts.csv` -> launches configuration server for .yaml and hosts.csv in the root folder.
+
+
 
 ## **DHCP**
 ---
-Navigate to `dhcp/README.md` to read about DHCP.    
+The DHCP server utilized for this project is a very lightweight, barebone version of [this DHCP server](https://github.com/niccokunzmann/python_dhcp_server). To manually assign IPs to known MAC addresses, you can modify the `hosts.csv` file located in the root of the main directory. The Pis will send a DHCP packet to the manager which in then responds with an IP and the location of the TFTP server. 
+Navigate to `dhcp/README.md` to read more about DHCP.    
 
 ## **TFTP**    
----
-Navigate to `tftp/README.md` to read about TFTP.    
+---    
+The TFTP server is responsible for serving the boot files needed for each node to start-up correctly. The TFTP code is pretty straightforward, but here's somethings to look out for: 
+
+* The TFTP server serves files from `install/boot` directory
+* **You must put `rootfs.tgz` inside this directory** 
+* You can edit `hello_protocol.sh` located in `install/initram` directory. **Be sure to run `install/initram/create_initramfs.gz` to create the `initramfs.gz `**. Please note that `create_initramfs.gz` has been updated to place the created zip in the `install/boot` directory. 
+Navigate to `tftp/README.md` to read more about TFTP.    
 
 ## **TCP**   
 ---   
+The server side of Hello Protocol is implemented here.    
+The `/etc/rc.local` file has been updated on the manager and the nodes to run the server and monitoring tools from startup. Take a look at it for each machine to get a better understanding of the startup process.    
 Navigate to `tcp/README.md` to read about TCP. **Note: to reinstall, please reset the `reinstall.txt` file or else it'll reinstall the same Raspberry Pi like how piman was called last time with restart!**    
 
 ## **hello_protocol.sh**   
@@ -425,15 +480,143 @@ python3 -m pip install psutil
 python3 monitoring_server.py
 ```
 
-### Configuration and Alerts    
+### **Configuration and Alerts**    
 To customize the timeout between each system check and/or the thresholds to alert, you can edit the `monitoring/monitoring.config`. 
 
 
 Currently the system send a slack message to `#ice2` channel. You can create a slack app and set up webhooks to link your channel to the system. Follow [this](https://get.slack.help/hc/en-us/articles/115005265063-Incoming-WebHooks-for-Slack) slack tutorial.
 
+## Grafana Dashboard    
+--- 
+Grafana Dashboard visualizes the data gathered by monitoring.
+
+Attention: Grafana is dependent on monitoring, so make sure monitoring is setup and working before working on this
+
+### Installation
+
+To install Grafana, Follow the instructions [here](https://grafana.com/grafana/download?platform=linux) for your OS
+
+Then install the SimpleJson Plugin from [here](https://grafana.com/grafana/plugins/grafana-simple-json-datasource) so Grafana can read JSON data
+
+### Run
+
+#### Mac
+
+Run
+```bash
+brew tap homebrew/services
+```
+then
+```bash
+brew services start grafana
+```
+
+Finally, go to [http://localhost:3000](http://localhost:3000) to open Grafana. Login using username: admin and password: admin
+
+#### Windows
+
+Follow [these](https://grafana.com/docs/installation/windows/) instructions
+
+#### Debian/Ubuntu
+
+Follow [these](https://grafana.com/docs/installation/debian/) instructions
+
+#### NOTE: After logging in, "Install Grafana" should be crossed out if you installed everything properly. Go to [here](https://grafana.com/docs/installation/requirements/) for more Information
+
+### Grafana Set Up on VM
+
+Make sure to put ```grafana.py ``` file or code next to the "logs" folder from monitoring. If you place the file somewhere else, make sure to change the paths accordingly.
+
+Next, place the ```grafana.sh ``` or code next to the ```grafana.py ``` file with the monitoring code. This executable will install ```bottle``` package and run grafana server
+
+Run following to make the file a executable
+```bash
+chmod +x grafana.sh
+```
+
+Finally, add the ```grafana.service``` file or code next to the ```monitoring.service``` file you created for monitoring and run the service. If all paths are correct, the service should run.
+
+#### Note: Make sure to update paths in case you are running these files from your own directories
+
+#### Now your VM is ready to send the monitoring data to Grafana
+
+### Running Dashboard
+
+After, completing the previous step, run 
+```bash
+ssh -R 80:localhost:8081 ssh.localhost.run
+```
+
+This command makes the ```localhost``` of the VM accessible from outside. After the command, two URLs will be generated. Pick one, you will need it for the following steps.
+
+Now, go back on Grafana on your Web Browser and click "Add Data Source". Search for SimpleJson and choose it.
+
+Name the Data Source whatever you like, place the URL you picked in the URL field and click "Save & Test". A message should popup telling you if connection was successful.
+
+#### Now Your VM is connected to Grafana on [http://localhost:3000](http://localhost:3000)
+
+Finally, click the four square button under the "+" button and click 'New Dashboard'. After the Dashboard is created, click "Add Query" then click the 'Query' dropdown and pick your Data Source.
+
+Now, click the "Select Metric" next to 'timeserie" and choose the monitoring data you want visualize. 
+
+From here, you can see data from last 6 hours but you can change the range if you want to check status from last night for example.
+
+You can also set the dashboard to update every 5 sec or the duration of your choosing.
+
+#### Shutting Grafana Down
+
+When done, click "CTRL-C" on the VM to stop the connection from your VM to Grafana.
+
+Then run (on Mac)
+```bash
+brew services stop grafana
+```
+
+to stop Grafana on your computer. Or follow the respective steps to stop Grafana on Windows and Linux.
+
 
 ### Start Up Scripts   
 The `/etc/rc.local` file has been updated on the manager and the nodes to run the server and monitoring tools from startup. Take a look at it for each machine to get a better understanding of the startup process. 
+
+## **Logs**
+All print statements will be redirecting to `logs` folder with format YEAR-MONTH-DATE_hour:minutes.log in logs folder.
+
+## **NTP Server** 
+Used a NTP server found here: https://github.com/limifly/ntpserver, minor bugs fixed
+The process for setting up the ntp client on pi's is explained here: http://raspberrypi.tomasgreno.cz/ntp-client-and-server.html
+The tally codes in 'ntpq -pn' are listed in: https://linux.die.net/man/8/ntpq
+
+To get ntp setup you must 'sudo apt-get install ntp' on the pi. 
+
+Then you want to stop the timesyncd service:
+
+```
+systemctl stop systemd-timesyncd
+systemctl disable systemd-timesyncd
+​/etc/init.d/ntp stop
+​/etc/init.d/ntp start
+```
+After go into '/etc/ntp.conf' and remove the servers:
+
+```
+# pool.ntp.org maps to more than 300 low-stratum NTP servers.
+# Your server will pick a different set every time it starts up.
+# *** Please consider joining the pool! ***
+# *** ***
+server 0.cz.pool.ntp.org iburst
+server 1.cz.pool.ntp.org iburst
+server 2.cz.pool.ntp.org iburst
+server 3.cz.pool.ntp.org iburs
+```
+
+Then restart the pi and DHCP will populate the '/run/ntp.conf.dhcp' file with the vm as a NTP server, the ip is taken from the vm ip in piman.conf
+
+You can check the list of servers with 'ntpq -pn' and after the ntp server receives and sends a few messages there should be a '*' meaning that it is the selected ntp server the client is getting the time from.
+
+The NTP server has its own thread in piman.py, on start it creates a socket that listens for ntp messages from all reachable ip's on port 123. The file has two threads a worker and reciever. The receiver will see requests on the 
+soccket and open up another socket to receive data from the client, it times this and enqueques the final time and address of the client. The worker will dequeue and send  the needed times to the requesting client. 
+
+If testing you can type 'sudo /etc/init.d/ntp restart' on the pi to have the client to instantly send a ntp message to the server.
 
 
 ## **Additional Notes**   
@@ -471,37 +654,5 @@ The following steps need to be followed in order.
 *    7) To make sure the systemd service file is working, type "systemctl start piman.service" then "systemctl status piman.service" after. To access the file, it is under /usr/lib/systemd/system.
         You may want to update the directory path of piman.py under ExecStart if you make changes to piman.py.
     
-* To test if a pi successfully booted up, ping the ip address it was assigned. Alternatively, ssh into that ip_address.
----
+* To test if a pi successfully booted up, ping the ip address it was assigned. Alternatively, ssh into that ip_address. *
 
-
-### Piman (Updated Notes)
-Piman has multiple functionalities.
-
-* Server - to run the piman server in the background, 
-    sudo python3 piman.py server &
-    
-* Restart - To restart a pi, run the following command
-    sudo python3 piman.py restart (port of pi you want to restart)
-    Ex: sudo python3 piman.py restart 2
-    
-* Reinstall - To reinstall a pi, run the following command
-    sudo python3 piman.py reinstall (port of the pi you want to reinstall
-    Ex: sudo python3 piman.py reinstall 1
-
-
-### DHCP Server
-
-The DHCP server utilized for this project is a very lightweight, barebone version of [this DHCP server](https://github.com/niccokunzmann/python_dhcp_server). To manually assign IPs to known MAC addresses, you can modify the `hosts.csv` file located in the root of the main directory. The Pis will send a DHCP packet to the manager which in then responds with an IP and the location of the TFTP server. 
-
-### TFTP Server
-
-The TFTP server is responsible for serving the boot files needed for each node to start-up correctly. The TFTP code is pretty straightforward, but here's somethings to look out for: 
-
-* The TFTP server serves files from `install/boot` directory
-* **You must put `rootfs.tgz` inside this directory** 
-* You can edit `hello_protocol.sh` located in `install/initram` directory. **Be sure to run `install/initram/create_initramfs.gz` to create the `initramfs.gz `**. Please note that `create_initramfs.gz` has been updated to place the created zip in the `install/boot` directory. 
-
-### TCP Server
-
-The server side of Hello Protocol is implemented here.    

@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8" />
+    <title>UI Config Web App: config file</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <script>
+      var numOfSwitches = 0;
+      var pi_lengths = {};
+      var submitForms = function(){
+        for (var key of Object.keys(pi_lengths)) {
+          $("#inputfield2").append(
+            "<input type='hidden' id=" + key + " name='inputsSwitchLen' value='" + pi_lengths[key] + "'></span>"
+        );
+        }
+        document.getElementById("inputboxes").submit();
+      }
+      var removeField = function(id){
+        var switchId = id.substring(0, id.indexOf("pi"));
+        var curr_length = pi_lengths[switchId];
+        pi_lengths[switchId] = curr_length - 1;
+        document.getElementById(id).remove();
+      }
+      $(document).ready(function() {
+        $('.delete').on('click', function(e){
+        var id = e.target.id;
+        var switchId = id.substring(0, id.indexOf("pi"));
+        var curr_length = pi_lengths[switchId];
+        pi_lengths[switchId] = curr_length - 1;
+        $(this).parent().remove();
+      });
+      });
+      
+      var removeSwitch = function(id) {
+        var query = "*[id*=" + id + "]";
+        $(query).each(function() {
+          $(this).remove();
+        });
+      }
+      var addPi = function(switchId) {
+        var curr_length = pi_lengths[switchId];
+        pi_lengths[switchId] = curr_length + 1;
+        var piId = switchId + "pi" + pi_lengths[switchId];
+        $("#" + switchId).append("<li id=" + piId + " ><label for=" + piId + ">" + "pi_addresses" + "</label>" +
+                      "<input type='text' " + " style='line-height:1px;font-size:12px;' name='inputsPi'>" +
+                      "<button type='button' id=" + piId + " onClick='removeField(this.id)'>delete</button></li>");
+      }
+      var addSwitch = function(id) {
+        numOfSwitches += 1;
+        numToDisplay = numOfSwitches - 1;
+        var switchId = "switch" + numToDisplay;
+        pi_lengths[switchId] = 0;
+        var label = "switch_" + numToDisplay + "_address";
+        
+        $("#inputfield2").append(
+            "<ul id=" + switchId + " ><label for=" + switchId + ">" + label + "</label>" +
+              "<input type='text' " + " style='line-height:1px;font-size:12px;' name='inputsSwitch'><button type='button' id=" + switchId + " onClick='removeSwitch(this.id)'>delete</button>" + 
+              "<button type='button' id=" + switchId + " onClick='addPi(this.id)'>Add Pi</button></ul>"
+        );
+      }
+      var grabDataFirstTime = function() {
+        $.ajax({
+          type: "GET",
+          url: "/get_config"
+        })
+          .done(function(content) {
+            $("#parameters").append("<li style='text-decoration: underline;'>Parameters:</li>");
+            $("#labels").append("<li style='text-decoration: underline;'>In file:</li>");
+            $("#inputfield").append("<li style='text-decoration: underline;'>Inputs:</li>");
+            $("#sfaf").insertAfter
+            for (var key of Object.keys(content)) {
+              if (key == "switches") {
+                break;
+              }
+              $("#parameters").append("<li class='lineup'>" + key + "</li>");
+              $("#labels").append("<li class='lineup'>" + content[key] + "</li>");
+              $("#inputfield").append(
+                  "<li><label for=" + key + ">" + key + "</label>" +
+                    "<input type='text' id=" + key + " value='" + content[key] + "'" + " style='line-height:1px;font-size:12px;' name='inputs'></li>"
+              );
+            }
+            var switches = content['switches'];
+
+            // Initialization of variables for adding switches and pi addresses
+            numOfSwitches = content['switches'].length;
+
+            for (index = 0; index < content['switches'].length; index++) {
+              var switchId = "switch" + index;
+              // Initialization of pi_lengths for pi addr additions/removals
+              pi_lengths[switchId] = switches[index][Object.keys(switches[index])[0]].length;
+
+              $("#parameters2").append("<li class='lineup2'>" + Object.keys(switches[index])[1] + "</li>");
+              $("#labels2").append("<li class='lineup2'>" + switches[index][Object.keys(switches[index])[1]] + "</li>");
+              $("#inputfield2").append(
+                  "<ul id=" + switchId + " ><label for=" + switchId + ">" + Object.keys(switches[index])[1] + "</label>" +
+                    "<input type='text' " + "value='" + switches[index][Object.keys(switches[index])[1]] + "'" + " style='line-height:1px;font-size:12px;' name='inputsSwitch'><button type='button' id=" + switchId + " onClick='removeSwitch(this.id)'>delete</button>" + 
+                    "<button type='button' id=" + switchId + " onClick='addPi(this.id)'>Add Pi</button></ul>"
+              );
+              for (i = 0; i < switches[index][Object.keys(switches[index])[0]].length; i++) {
+                var piId = switchId + "pi" + i;
+                $("#parameters2").append("<li class='lineup2'>" + "pi addr " + i + "</li>");
+                $("#labels2").append("<li class='lineup2'>" + switches[index][Object.keys(switches[index])[0]][i] + "</li>");
+                $("#" + switchId).append(
+                  "<li style='display: table-row;' id=" + piId + " ><label for=" + piId + ">" + Object.keys(switches[index])[0] + "</label>" +
+                      "<input type='text' " + "value='" + switches[index][Object.keys(switches[index])[0]][i] + "'" + " style='line-height:1px;font-size:12px;' name='inputsPi'>" +
+                      "<button type='button' class='delete' id=" + piId + ">delete</button></li>"
+                );
+              }
+            }
+          })
+          .fail(function(error) {
+            clearInterval(intervalId);
+          });
+      };
+      var grabData = function() {
+        $.ajax({
+          type: "GET",
+          url: "/get_config"
+        })
+          .done(function(content) {
+            document.getElementById("parameters").innerHTML = "";
+            document.getElementById("parameters2").innerHTML = "";
+            document.getElementById("labels").innerHTML = "";
+            document.getElementById("labels2").innerHTML = "";
+            $("#parameters").append("<li style='text-decoration: underline;'>Parameters:</li>");
+            $("#labels").append("<li style='text-decoration: underline;'>In file:</li>");
+            for (var key of Object.keys(content)) {
+              if (key == "switches") {
+                break;
+              }
+              $("#parameters").append("<li class='lineup'>" + key + "</li>");
+              $("#labels").append("<li class='lineup'>" + content[key] + "</li>");
+            }
+            var switches = content['switches'];
+            for (index = 0; index < content['switches'].length; index++) {
+              $("#parameters2").append("<li class='lineup2'>" + Object.keys(switches[index])[1] + "</li>");
+              $("#labels2").append("<li class='lineup2'>" + switches[index][Object.keys(switches[index])[1]] + "</li>");
+              for (i = 0; i < switches[index][Object.keys(switches[index])[0]].length; i++) {
+                $("#parameters2").append("<li class='lineup2'>" + "pi addr " + i + "</li>");
+                $("#labels2").append("<li class='lineup2'>" + switches[index][Object.keys(switches[index])[0]][i] + "</li>");
+              }
+            }
+          })
+          .fail(function(error) {
+            clearInterval(intervalId);
+          });
+      };
+      grabDataFirstTime();
+      var intervalId = setInterval(grabData, 1000 * 5);
+    </script>
+  </head>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css" />
+  <link
+    rel="stylesheet"
+    href="https://fonts.googleapis.com/css?family=Raleway"
+  />
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"
+  />
+  <style>
+    body,
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6 {
+      font-family: "Raleway", sans-serif;
+    }
+
+    ul {
+      padding: 0;
+      margin: 0;
+      display: table;
+      border-spacing: .3em;
+    }
+    li {
+        list-style: none;
+    }
+    label, button {
+        display: table-cell;
+    }
+    button {
+        border: 2px outset #aaa;
+        border-radius: 4px;
+    }
+
+    .lineup {
+      margin-bottom: 28px;
+    }
+
+    .lineup2 {
+      margin-bottom: 38.5px;
+    }
+
+    body,
+    html {
+      background-color: #080808;
+      height: 100%;
+      line-height: 1.8;
+    }
+
+    body {
+      padding-top: 60px; /*50px for the height of the navbar + 37px for the offset*/
+    }
+
+    /* Full height image header */
+    .bgimg-1 {
+      background-position: center;
+      background-size: cover;
+      background-image: url("https://www.vehiclehi.com/thumbnails/detail/20180507/5aeff98fa6594.jpg");
+      min-height: 100%;
+    }
+
+    .w3-bar .w3-button {
+      padding: 16px;
+    }
+
+      * {
+    box-sizing: border-box;
+  }
+
+  .remove-buttons {
+    height: 10px;
+  }
+
+  .row-container1 {
+    column-gap: 150px;
+  }
+
+  /* Create three equal columns that floats next to each other */
+  .column1 {
+    float: left;
+    width: 33.3%;
+    padding: 10px;
+    height: 300px; /* Should be removed. Only for demonstration */
+    padding-right: 100px;
+  }
+
+  /* Clear floats after the columns */
+  .row:after {
+    content: "";
+    display: table;
+    clear: both;
+  }
+
+  /* Responsive layout - makes the three columns stack on top of each other instead of next to each other */
+  @media screen and (max-width: 600px) {
+    .column {
+      width: 100%;
+    }
+  }
+  </style>
+  <body>
+    <!-- Navbar (sit on top) -->
+    <div class="w3-top">
+        <div class="w3-bar w3-white w3-card" id="myNavbar">
+          <a href="/" class="w3-bar-item w3-button w3-wide">Piman Config UI</a>
+          <!-- Right-sided navbar links -->
+          <div class="w3-right w3-hide-small">
+            <a href="/config" class="w3-bar-item w3-button"
+              ><i class="fa fa-gear"></i>CONFIG</a
+            >
+            <a href="/hosts-csv" class="w3-bar-item w3-button"
+              ><i class="fa fa-gear"></i>HOSTS.CSV</a
+            >
+          </div>
+          <!-- Hide right-floated links on small screens and replace them with a menu icon -->
+  
+          <a
+            href="javascript:void(0)"
+            class="w3-bar-item w3-button w3-right w3-hide-large w3-hide-medium"
+            onclick="w3_open()"
+          >
+            <i class="fa fa-bars"></i>
+          </a>
+        </div>
+      </div>
+  
+      <!-- Sidebar on small screens when clicking the menu icon -->
+      <nav
+        class="w3-sidebar w3-right w3-bar-block w3-black w3-card w3-animate-left w3-hide-medium w3-hide-large"
+        style="display:none;"
+        id="mySidebar"
+      >
+        <a
+          href="javascript:void(0)"
+          onclick="w3_close()"
+          class="w3-bar-item w3-button w3-large w3-padding-16"
+          >Close ×</a
+        >
+        <a href="/" onclick="w3_close()" class="w3-bar-item w3-button"
+          >HOME</a
+        >
+        <a href="/config" onclick="w3_close()" class="w3-bar-item w3-button"
+          >CONFIG</a
+        >
+        <a href="/hosts-csv" onclick="w3_close()" class="w3-bar-item w3-button"
+          >HOSTS.CSV</a
+        >
+      </nav>
+      <!-- Header with full-height image -->
+    <header
+    class="bgimg-1 w3-display-container w3-grayscale-min"
+    id="home"
+    style="background-color: black;"
+  >
+    <div class="w3-display-left w3-text-white" style="padding:48px;">
+          <span class="w3-large">Config file settings</span>
+      
+        <form method="POST" id="inputboxes">
+            <div class="row row-container1">
+                <div class="column1">
+                    <ui style="list-style: none;" id="inputfield">
+                      </ui>
+                </div>
+                <div class="column1">
+                    <ui style="list-style: none;" id="parameters">
+                      </ui>
+                </div>
+                  <div class="column1">
+                      <ui style="list-style: none;" id="labels">
+                        </ui>
+                  </div>
+            </div>
+	    <b>Restart PiMan after clicking 'Apply Changes' for new configuration to take effect.</b>
+	    <br>
+            <button type="button" onClick="addSwitch()">Add Switch</button>
+            <button type='button' onclick="submitForms()">Apply Changes</button>
+            <div class="row row-container1">
+                <div class="column1">
+                    <ui style="list-style: none;" id="inputfield2">
+                      </ui>
+                </div>
+                <div class="column1">
+                    <ui style="list-style: none;" id="parameters2">
+                      </ui>
+                </div>
+                  <div class="column1">
+                      <ui style="list-style: none;" id="labels2">
+                        </ui>
+                  </div>
+            </div>
+        </form>
+  </header>
+
+    <script>
+      // Toggle between showing and hiding the sidebar when clicking the menu icon
+      var mySidebar = document.getElementById("mySidebar");
+
+      function w3_open() {
+        if (mySidebar.style.display === "block") {
+          mySidebar.style.display = "none";
+        } else {
+          mySidebar.style.display = "block";
+        }
+      }
+
+      // Close the sidebar with the close button
+      function w3_close() {
+        mySidebar.style.display = "none";
+      }
+    </script>
+  </body>
+</html>
