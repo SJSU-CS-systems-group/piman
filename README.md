@@ -201,7 +201,7 @@ Next, place the ```grafana.sh ``` or code next to the ```grafana.py ``` file wit
 
 Run following to make the file a executable
 ```bash
-chmod -x grafana.sh
+chmod +x grafana.sh
 ```
 
 Finally, add the ```grafana.service``` file or code next to the ```monitoring.service``` file you created for monitoring and run the service. If all paths are correct, the service should run.
