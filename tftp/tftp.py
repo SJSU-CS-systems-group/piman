@@ -47,7 +47,7 @@ class TFTPServer:
             with ZipFile(zipfile) as z:
                 fd = z.open("install/boot/" + name)
         except KeyError:
-            logger.error("key error - looking in filesystem next")
+            logger.error("{}: key error - looking in filesystem next".format(name))
             pass  # we'll try looking in the filesystem next
         if not fd:
             fd = open("{}/{}".format(self.data_dir, name), "rb")

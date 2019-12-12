@@ -300,7 +300,6 @@ class CASEINSENSITIVE(object):
     def __init__(self, s):
         self.s = s.lower()
     def __eq__(self, other):
-        print('bad ip',other)
         return self.s == other.lower()
 
 class CSVDatabase(object):
