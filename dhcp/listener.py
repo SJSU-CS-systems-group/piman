@@ -4,6 +4,7 @@ from socket import *
 import struct
 import base64
 import select
+import codecs
 
 # see https://en.wikipedia.org/wiki/Dynamic_Host_Configuration_Protocol
 # section DHCP options
@@ -37,7 +38,8 @@ def macunpack(data):
     return ':'.join([s[i:i+2].decode('ascii') for i in range(0, 12, 2)])
 
 def macpack(mac):
-    return base64.b16decode(mac.replace(':', '').replace('-', '').encode('ascii'))
+    return codecs.decode(mac.replace(':', '').replace('-', '').encode('ascii'), "hex")
+    # base64.b16decode
 
 def unpackbool(data):
     return data[0]

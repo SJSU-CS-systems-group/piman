@@ -10,6 +10,7 @@ import uuid
 from .listener import *
 from piman import logger
 
+
 """
 This class contains specified attributes which will be populated, these attributes are associated with
 the required options for our DHCP+PXE server. 
@@ -17,7 +18,7 @@ the required options for our DHCP+PXE server.
 
 class WriteBootProtocolPacket(object):
 
-    message_type = 2 # 1 for client -> server 2 for server -> client
+    message_type = 2  # 1 for client -> server 2 for server -> client
     hardware_type = 1
     hardware_address_length = 6
     hops = 0
@@ -25,7 +26,7 @@ class WriteBootProtocolPacket(object):
     transaction_id = None
 
     seconds_elapsed = 0
-    bootp_flags = 0 # unicast
+    bootp_flags = 0  # unicast
 
     # The following are set, but altered within the "send_offer" function inside the transaction class
     client_ip_address = '0.0.0.0'
@@ -61,7 +62,7 @@ class WriteBootProtocolPacket(object):
 
         result[4:8] = struct.pack('>I', self.transaction_id)
 
-        result[ 8:10] = shortpack(self.seconds_elapsed)
+        result[8:10] = shortpack(self.seconds_elapsed)
         result[10:12] = shortpack(self.bootp_flags)
 
         result[12:16] = inet_aton(self.client_ip_address)
@@ -75,7 +76,7 @@ class WriteBootProtocolPacket(object):
 
         for option in self.options:
             value = self.get_option(option)
-            #print(option, value)
+            # print(option, value)
             if value is None:
                 continue
             result += bytes([option, len(value)]) + value
@@ -123,7 +124,7 @@ class DelayWorker(object):
     def __init__(self):
         self.closed = False
         self.queue = queue.PriorityQueue()
-        self.thread = threading.Thread(target = self._delay_response_thread)
+        self.thread = threading.Thread(target=self._delay_response_thread)
         self.thread.start()
 
     def _delay_response_thread(self):
@@ -139,7 +140,7 @@ class DelayWorker(object):
             else:
                 func(*args, **kw)
 
-    def do_after(self, seconds, func, args = (), kw = {}):
+    def do_after(self, seconds, func, args=(), kw={}):
         self.queue.put((time.time() + seconds, func, args, kw))
 
     def close(self):
@@ -198,7 +199,7 @@ class Transaction(object):
         offer = WriteBootProtocolPacket(self.configuration)
         offer.parameter_order = discovery.parameter_request_list
         mac = discovery.client_mac_address
-        ip = offer.your_ip_address = self.server.get_ip_address(discovery) 
+        ip = offer.your_ip_address = self.server.get_ip_address(discovery)
         offer.transaction_id = discovery.transaction_id
         offer.relay_agent_ip_address = discovery.relay_agent_ip_address
         offer.client_mac_address = mac
@@ -211,7 +212,7 @@ class Transaction(object):
         self.server.unicast(pkt)
     
     def received_dhcp_request(self, request):
-        if self.is_done(): return 
+        if self.is_done(): return
         self.server.client_has_chosen(request)
         self.acknowledge(request)
         self.close()
@@ -240,7 +241,7 @@ class Transaction(object):
 
 class DHCPServerConfiguration(object):
     
-    dhcp_offer_after_seconds = 1 # must be >0!!!
+    dhcp_offer_after_seconds = 1  # must be >0!!!
     dhcp_acknowledge_after_seconds = 10
     length_of_transaction = 40
 
@@ -299,6 +300,7 @@ class CASEINSENSITIVE(object):
     def __init__(self, s):
         self.s = s.lower()
     def __eq__(self, other):
+        print('bad ip',other)
         return self.s == other.lower()
 
 class CSVDatabase(object):
@@ -307,9 +309,9 @@ class CSVDatabase(object):
 
     def __init__(self, file_name):
         self.file_name = file_name
-        self.file('a').close() # create file
+        self.file('a').close()  # create file
 
-    def file(self, mode = 'r'):
+    def file(self, mode='r'):
         return open(self.file_name, mode)
 
     def get(self, pattern):
@@ -323,7 +325,7 @@ class CSVDatabase(object):
     def delete(self, pattern):
         lines = self.all()
         lines_to_delete = self.get(pattern)
-        self.file('w').close() # empty file
+        self.file('w').close()  # empty file
         for line in lines:
             if line not in lines_to_delete:
                 self.add(line)
@@ -354,14 +356,14 @@ class Host(object):
                    int(time.time()))
 
     @staticmethod
-    def get_pattern(mac = ALL, ip = ALL, hostname = ALL, last_used = ALL):
+    def get_pattern(mac=ALL, ip=ALL, hostname=ALL, last_used=ALL):
         return [mac, ip, hostname, last_used]
 
     def to_tuple(self):
         return [self.mac, self.ip, self.hostname, str(int(self.last_used))]
 
     def to_pattern(self):
-        return self.get_pattern(ip = self.ip, mac = self.mac)
+        return self.get_pattern(ip=self.ip, mac=self.mac)
 
     def __hash__(self):
         return hash(self.key)
@@ -384,7 +386,7 @@ class HostDatabase(object):
     def add(self, host):
         self.db.add(host.to_tuple())
 
-    def delete(self, host = None, **kw):
+    def delete(self, host=None, **kw):
         if host is None:
             pattern = Host.get_pattern(**kw)
         else:
@@ -400,16 +402,16 @@ class HostDatabase(object):
         
 class DHCPServer(object):
 
-    def __init__(self, configuration = None):
+    def __init__(self, configuration=None):
         if configuration == None:
             configuration = DHCPServerConfiguration()
         self.configuration = configuration
         self.socket = socket(type = SOCK_DGRAM)
         self.socket.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
-        self.socket.bind(('', 67)) # Using '' instead to broadcast to all
+        self.socket.bind(('', 67))  # Using '' instead to broadcast to all
         self.delay_worker = DelayWorker()
         self.closed = False
-        self.transactions = collections.defaultdict(lambda: Transaction(self)) # id: transaction
+        self.transactions = collections.defaultdict(lambda: Transaction(self))  # id: transaction
         self.hosts = HostDatabase(self.configuration.host_file)
         self.raw_sock = socket(AF_PACKET, SOCK_RAW)
         self.raw_sock.bind((self.configuration.net_inter_name, 0)) # ETH_P_ALL = 0
@@ -422,7 +424,7 @@ class DHCPServer(object):
         for transaction in list(self.transactions.values()):
             transaction.close()
 
-    def update(self, timeout = 0):
+    def update(self, timeout=0):
         try:
             reads = select.select([self.socket], [], [], timeout)[0]
         except ValueError:
@@ -458,9 +460,9 @@ class DHCPServer(object):
     def is_valid_client_address(self, address):
         if address is None:
             return False
-        #print(address)
-        #print(self.configuration.subnet_mask)
-        #print(self.configuration.network)
+        # print(address)
+        # print(self.configuration.subnet_mask)
+        # print(self.configuration.network)
         a = address.split('.')
         s = self.configuration.subnet_mask.split('.')
         n = self.configuration.network.split('.')
@@ -486,14 +488,14 @@ class DHCPServer(object):
         if ip is None:
             # 3. choose new, free ip address
             chosen = False
-            network_hosts = self.hosts.get(ip = self.configuration.network_filter())
+            network_hosts = self.hosts.get(ip=self.configuration.network_filter())
             for ip in self.configuration.all_ip_addresses():
                 if not any(host.ip == ip for host in network_hosts):
                     chosen = True
                     break
             if not chosen:
                 # 4. reuse old valid ip address
-                network_hosts.sort(key = lambda host: host.last_used)
+                network_hosts.sort(key=lambda host: host.last_used)
                 ip = network_hosts[0].ip
                 assert self.is_valid_client_address(ip)
             str_new_ip = "new ip: " + str(ip)
@@ -624,6 +626,7 @@ def do_dhcp(hosts_file, subnet_mask, ip, lease_time, net_inter):
         assert ip == server.configuration.network_filter()
     logger.info("DHCP server is running...")
     server.run()
+    
     
 if __name__ == '__main__':
     do_dhcp()

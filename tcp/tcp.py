@@ -146,7 +146,8 @@ class TCPServer:
 
         logger.info("TCP - finished file_transferring")
         client_socket.close()
-
+        transfer_file.close()
+        
     def join(self):
         for thread in self.threads:
             thread.join()

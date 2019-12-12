@@ -1,5 +1,7 @@
 import click
 import piman
+from dhcp import test_dhcp
+from tftp import test_tftp
 
 
 @click.group()
@@ -43,6 +45,14 @@ def power_cycle():
 def config(name, configpath, hostcsvpath):
     piman.config_ui(name, configpath, hostcsvpath)
 
+
+@cli.command()
+def run_dhcp_test():
+    test_dhcp.run_test()
+
+@cli.command()
+def run_tftp_test():
+    test_tftp.run_test()
 
 if __name__ == "__main__":
     cli()
