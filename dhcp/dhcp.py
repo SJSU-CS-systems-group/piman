@@ -383,7 +383,10 @@ class HostDatabase(object):
         return list(map(Host.from_tuple, self.db.get(pattern)))
 
     def add(self, host):
-        self.db.add(host.to_tuple())
+        if(self.eval(host)):
+            self.db.add(host.to_tuple())
+        else:
+            print("invalid host {}, cannot add".format(host.to_tuple()))
 
     def delete(self, host=None, **kw):
         if host is None:

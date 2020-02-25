@@ -1,3 +1,4 @@
+
 import click
 import piman
 from dhcp import test_dhcp
@@ -28,9 +29,10 @@ def reinstall(switch_address, port):
     piman.reinstall(switch_address, port)
     
 @cli.command()
+@click.argument('switch_address')
 @click.argument('port', nargs = -1)
-def mapper(port):
-    piman.mapper(port)
+def mapper(switch_address,port):
+    piman.mapper(switch_address,port)
 
 @cli.command()
 def power_cycle():

@@ -3,7 +3,7 @@ import logging.config
 import os
 from zipfile import ZipFile
 import io
-
+import time
 
 # create the logger before doing imports since everyone is going
 # to use them
@@ -29,6 +29,7 @@ from dhcp import dhcp
 from tcp import tcp
 from tftp import tftp
 from utility import power_cycle
+from utility import mac_mapper
 from piman import logger
 from parse_config import config
 import ntpserver
@@ -114,10 +115,9 @@ def reinstall(switch_address, port):
         f.write(network_addr+str(port))
     power_cycle.power_cycle(switch_address, port)
     
-def mapper(port):
+def mapper(switch_address,port):
     for portNum in port:
-        power_cycle.power_cycle(portNum)
-
+        power_cycle.power_cycle(switch_address,portNum)
     time.sleep(10)
     mac_mapper.mac_mapper()
 
