@@ -49,6 +49,7 @@ def mac_mapper():
                 #data.append(str(varBind))
                 print("inside varBind loop")
                 element = str(varBind)
+                print(element)
                 element = element.replace("SNMPv2-SMI::mib-2.17.4.3.1.2.", "").replace(" = ", ";")
                 splitArr = element.split(";")
                 data.append(host + ',' + element.replace(splitArr[0],decToHexAddress(splitArr[0])))
