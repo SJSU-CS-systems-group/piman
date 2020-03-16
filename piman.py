@@ -110,15 +110,15 @@ def restart(switch_address, interface, ports):
 
 
 def reinstall(switch_address, interface, port):
-    with open("/tcp/reinstall.txt", "w") as f:
-        network_addr = ip[:-1]
-        f.write(network_addr+str(port))
+    with open("reinstall.txt", "w") as f:
+        network_addr = ip[:7] + str(interface) + "." + str(port)
+        f.write(network_addr)
     power_cycle.power_cycle(switch_address, interface, port)
     
 def mapper(switch_address,interface, port):
     for portNum in port:
         power_cycle.power_cycle(switch_address,interface, portNum)
-    time.sleep(10)
+    time.sleep(30)
     mac_mapper.mac_mapper()
 
 def config_ui(name, config_path, hosts_csv_path):

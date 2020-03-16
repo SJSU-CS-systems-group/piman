@@ -206,6 +206,7 @@ class Transaction(object):
         offer.client_ip_address = discovery.client_ip_address or '0.0.0.0'
         offer.bootp_flags = discovery.bootp_flags
         offer.dhcp_message_type = 'DHCPOFFER'
+        offer.server_identifier = self.server.configuration.ip
         offer.client_identifier = mac
         offer.ip_address_lease_time = self.configuration.ip_address_lease_time
         pkt = construct_packet(mac, self.configuration.ip, ip, offer)
