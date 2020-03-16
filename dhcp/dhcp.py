@@ -401,6 +401,16 @@ class HostDatabase(object):
     def replace(self, host):
         self.delete(host)
         self.add(host)
+
+    def eval(self,host):
+        result = True
+        for element in self.all():
+            if(host.mac == element.mac):
+                if(host.ip != element.ip):    
+                    result = False
+            if(host.mac[0]=="5"):
+                result = False
+        return result
         
 class DHCPServer(object):
 
