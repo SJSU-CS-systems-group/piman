@@ -37,8 +37,8 @@ def turn_off(switch_address, interface, port):
         print("Power_Cycle - not found")
         logger.error("Power_Cycle - not found")
     else:
-        print("Power_Cycle - Set pi at inerface {} port {} to OFF".format(interface, port))
-        logger.warning("Power_Cycle - Set pi at inerface {} port {} to OFF".format(interface, port))
+        print("Power_Cycle - Set pi at interface {} port {} to OFF".format(interface, port))
+        logger.warning("Power_Cycle - Set pi at interface {} port {} to OFF".format(interface, port))
 
 
 def turn_on(switch_address, interface, port):
@@ -62,5 +62,5 @@ def turn_on(switch_address, interface, port):
         print("Power_Cycle - not found")
         logger.error("Power_Cycle - not found")
     else:
-        print("Power_Cycle - Set pi at inerface {} port {} to ON".format(interface, port))
-        logger.warning("Power_Cycle - Set pi at inerface {} port {} to ON".format(interface, port))
+        print("Power_Cycle - Set pi at interface {} port {} to ON".format(interface, port))
+        logger.warning("Power_Cycle - Set pi at interface {} port {} to ON".format(interface, port))

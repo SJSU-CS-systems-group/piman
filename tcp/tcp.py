@@ -95,11 +95,11 @@ class TCPServer:
         try:
             logger.info("serving client from: {}".format(client_addr))
             fd = client_socket.makefile()
-            # date = datetime.now()
-            # dt_string = date.strftime('%Y%m%d%H%M.%S')
-            # dt_string = 'busybox date -s ' + dt_string + "\n" + "EOM\n"
-            # print("Sending date command to pi:", dt_string)
-            # client_socket.send(dt_string.encode())
+            date = datetime.now()
+            dt_string = date.strftime('%Y%m%d%H%M.%S')
+            dt_string = 'busybox date -s ' + dt_string + "\n" + "EOM\n"
+            print("Sending date command to pi:", dt_string)
+            client_socket.send(dt_string.encode())
             req = fd.readline()
             while req:
                 req = req.strip()
