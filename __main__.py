@@ -1,3 +1,4 @@
+
 import click
 import piman
 from dhcp import test_dhcp
@@ -16,27 +17,25 @@ def server():
 
 @cli.command()
 @click.argument('switch_address')
+@click.argument('interface')
 @click.argument('ports', nargs=-1)
-def restart(switch_address, ports):
-    piman.restart(switch_address, ports)
+def restart(switch_address, interface, ports):
+    piman.restart(switch_address, interface, ports)
 
 
 @cli.command()
 @click.argument('switch_address')
+@click.argument('interface')
 @click.argument('port')
-def reinstall(switch_address, port):
-    piman.reinstall(switch_address, port)
+def reinstall(switch_address, interface, port):
+    piman.reinstall(switch_address, interface, port)
     
 @cli.command()
+@click.argument('switch_address')
+@click.argument('interface')
 @click.argument('port', nargs = -1)
-def mapper(port):
-    piman.mapper(port)
-
-@cli.command()
-def power_cycle():
-    power_cycle.power_cycle(10)
-    server()
-
+def mapper(switch_address, interface, port):
+    piman.mapper(switch_address,interface, port)
 
 @cli.command()
 @click.argument('name')

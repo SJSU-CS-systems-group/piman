@@ -206,6 +206,7 @@ class Transaction(object):
         offer.client_ip_address = discovery.client_ip_address or '0.0.0.0'
         offer.bootp_flags = discovery.bootp_flags
         offer.dhcp_message_type = 'DHCPOFFER'
+        offer.server_identifier = self.server.configuration.ip
         offer.client_identifier = mac
         offer.ip_address_lease_time = self.configuration.ip_address_lease_time
         pkt = construct_packet(mac, self.configuration.ip, ip, offer)
@@ -383,7 +384,10 @@ class HostDatabase(object):
         return list(map(Host.from_tuple, self.db.get(pattern)))
 
     def add(self, host):
-        self.db.add(host.to_tuple())
+        if(self.eval(host)):
+            self.db.add(host.to_tuple())
+        else:
+            print("invalid host {}, cannot add".format(host.to_tuple()))
 
     def delete(self, host=None, **kw):
         if host is None:
@@ -398,6 +402,16 @@ class HostDatabase(object):
     def replace(self, host):
         self.delete(host)
         self.add(host)
+
+    def eval(self,host):
+        result = True
+        for element in self.all():
+            if(host.mac == element.mac):
+                if(host.ip != element.ip):    
+                    result = False
+            if(host.mac[0]=="5"):
+                result = False
+        return result
         
 class DHCPServer(object):
 

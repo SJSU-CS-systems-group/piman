@@ -89,26 +89,27 @@ class TCPServer:
         """
         This function serves the control socket's coming requests.
         """
+        reinstall_file = list()
+        with open('reinstall.txt') as fp:
+            reinstall_file = fp.read()
         try:
             logger.info("serving client from: {}".format(client_addr))
             fd = client_socket.makefile()
-
             date = datetime.now()
             dt_string = date.strftime('%Y%m%d%H%M.%S')
             dt_string = 'busybox date -s ' + dt_string + "\n" + "EOM\n"
             print("Sending date command to pi:", dt_string)
             client_socket.send(dt_string.encode())
-
             req = fd.readline()
             while req:
                 req = req.strip()
-                logger.debug("TCP - recieved request {}".format(req))
+                logger.info("TCP - recieved request {}".format(req))
                 if req == RECV_IS_UNINSTALLED:
                     logger.info("TCT - uninstalled, sending format")
                     # this line of code is suggested by team fire
                     client_socket.send(SEND_FORMAT)
                 elif req == RECV_IS_INSTALLED:
-                    if client_addr[0] in []:
+                    if client_addr[0] in reinstall_file:
                         logger.info("TCP - need to reinstall, sending format")
                         client_socket.send(SEND_FORMAT)
                     else:
@@ -123,6 +124,7 @@ class TCPServer:
                 req = fd.readline()
         except:
             logger.error(traceback.print_exc())
+        logger.info("tcpdump")
         client_socket.close()
 
     def __transfer_file(self, client_socket):

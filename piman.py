@@ -3,7 +3,7 @@ import logging.config
 import os
 from zipfile import ZipFile
 import io
-
+import time
 
 # create the logger before doing imports since everyone is going
 # to use them
@@ -29,6 +29,7 @@ from dhcp import dhcp
 from tcp import tcp
 from tftp import tftp
 from utility import power_cycle
+from utility import mac_mapper
 from piman import logger
 from parse_config import config
 import ntpserver
@@ -103,22 +104,21 @@ def server():
     ntp_thread.join()
 
 
-def restart(switch_address, ports):
+def restart(switch_address, interface, ports):
     for port in ports:
-        power_cycle.power_cycle(switch_address, port)
+        power_cycle.power_cycle(switch_address, interface, port)
 
 
-def reinstall(switch_address, port):
-    with open("/tcp/reinstall.txt", "w") as f:
-        network_addr = ip[:-1]
-        f.write(network_addr+str(port))
-    power_cycle.power_cycle(switch_address, port)
+def reinstall(switch_address, interface, port):
+    with open("reinstall.txt", "w") as f:
+        network_addr = ip[:7] + str(interface) + "." + str(port)
+        f.write(network_addr)
+    power_cycle.power_cycle(switch_address, interface, port)
     
-def mapper(port):
+def mapper(switch_address,interface, port):
     for portNum in port:
-        power_cycle.power_cycle(portNum)
-
-    time.sleep(10)
+        power_cycle.power_cycle(switch_address,interface, portNum)
+    time.sleep(30)
     mac_mapper.mac_mapper()
 
 def config_ui(name, config_path, hosts_csv_path):
@@ -140,17 +140,17 @@ if __name__ == "__main__":
     if argv[1] == "server":
         server()
     elif argv[1] == "restart":
-        if len(argv) < 3:
+        if len(argv) < 5:
             exit_piman()
-        restart(argv[2], argv[3:])
+        restart(argv[2], argv[3],argv[4])
     elif argv[1] == "mapper":
-        if len(argv) < 3:
+        if len(argv) < 5:
             exit_piman()
-        mapper(argv[2])
+        mapper(argv[2],argv[3],argv[4])
     elif argv[1] == "reinstall":
-        if len(argv) < 3:
+        if len(argv) < 5:
             exit_piman()
-        reinstall(argv[2], argv[3])
+        reinstall(argv[2], argv[3], argv[4])
     elif argv[1] == "config":
         config_ui(argv[2], argv[3], argv[4])
 

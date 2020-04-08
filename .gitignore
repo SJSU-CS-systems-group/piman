@@ -47,6 +47,7 @@ __pycache__
 
 /releases
 /standalone/DHCPGui.exe
-hosts.csv
+/hosts.csv
 /build
 /.idea
+/.yaml

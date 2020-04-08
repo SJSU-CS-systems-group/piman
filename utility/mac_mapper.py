@@ -1,5 +1,5 @@
 from pysnmp.hlapi import *
-import config
+from parse_config import config
 import sys
 
 
@@ -7,8 +7,8 @@ import sys
 
 #.env file need to have VLAN number & Switch address
 
-host = config.SWITCH_ADDR
-vlan = config.VLAN
+host = config['switches'][0]['swtich_0_address']
+vlan = config['private_number']
 
 
 def decToHexAddress(arg):
@@ -26,9 +26,8 @@ def decToHexAddress(arg):
 def mac_mapper():
     output = []
     for (errorIndication, errorStatus, errorIndex, varBinds) in nextCmd(SnmpEngine(),
-         CommunityData('private@' + vlan), UdpTransportTarget((host, 161)), ContextData(),
+         CommunityData('private@'+str(vlan)), UdpTransportTarget((host, 161),timeout = 2, retries = 5), ContextData(),
          ObjectType(ObjectIdentity('1.3.6.1.2.1.17.4.3.1.2')), lexicographicMode=False):
-        
         if errorIndication:
             print(errorIndication, file=sys.stderr)
             break
@@ -41,8 +40,6 @@ def mac_mapper():
             data = []
 
             for varBind in varBinds:
-                #data.append(str(varBind))
-
                 element = str(varBind)
                 element = element.replace("SNMPv2-SMI::mib-2.17.4.3.1.2.", "").replace(" = ", ";")
                 splitArr = element.split(";")
@@ -53,12 +50,12 @@ def mac_mapper():
             print(data)
 
         output.extend(data)
-
+     
     text = ""
     for j in output:
         text += j + '\n'
 
-    with open('utility/mac_mapper.txt', "w") as f:
+    with open('mac_mapper.txt', "w") as f:
         f.write(text)
 
 
