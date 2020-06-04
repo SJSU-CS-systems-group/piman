@@ -1,0 +1,6 @@
+private_number: 1
+server_address: 172.17.2.1
+subnet_mask: 255.255.255.0
+interface: usb-pi
+switch_count: 0
+switches:

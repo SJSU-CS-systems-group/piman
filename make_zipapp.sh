@@ -10,7 +10,7 @@ mkdir build/piman.app
 cp -r logging.conf utility tftp dhcp monitoring tcp *.py build/piman.app
 mkdir build/piman.app/install
 mkdir build/logs
-cp .yaml build
+cp piman.yaml build
 cp -r install/boot build/piman.app/install
 cp -r config_ui build/piman.app/config_ui
 # we don't want crypto stuff since it has native code

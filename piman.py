@@ -79,7 +79,7 @@ interface = config['interface']
 
 def server():
     config_ui_thread = Thread(target=config_ui, args=[
-                              "", "./.yaml", "./hosts.csv"], name="config_ui")
+                              "", "./piman.yaml", "./hosts.csv"], name="config_ui")
     config_ui_thread.start()
 
     tftp_thread = Thread(target=tftp.do_tftpd, args=[

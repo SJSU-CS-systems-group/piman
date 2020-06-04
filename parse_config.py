@@ -7,10 +7,7 @@ from piman import logger
 
 config = {}
 
-file = glob.glob('*.yml')
-file.extend(glob.glob('.yml'))
-file.extend(glob.glob('.yaml'))
-file.extend(glob.glob('*.yaml'))
+file = glob.glob('piman.yaml')
 if len(file) != 1:
     logger.fatal("Config file could not be found")
     sys.exit(1)

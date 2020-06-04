@@ -116,12 +116,12 @@ pip install python-dotenv
 	interface: 
 	switch_count:
 	switches:
-	  - switch_0_address:
+	  - switch_address:
 	    pi_addresses:
 	      -
 	      -
 	      -
-	  - swtich_1_address:
+	  - switch_address:
 	    pi_addresses:
 	      -
 	      -
@@ -138,7 +138,7 @@ pip install python-dotenv
 	interface: ens4
 	switch_count: 2
 	switches:
-	  - swtich_0_address: 172.30.4.254
+	  - switch_address: 172.30.4.254
 	    pi_addresses:
 	      - 172.30.4.13
 	      - 172.30.4.14
@@ -148,7 +148,7 @@ pip install python-dotenv
 	      - 172.30.4.18
 	      - 172.30.4.19
 	      - 172.30.4.20
-	  - swtich_1_address: 172.30.4.128
+	  - switch_address: 172.30.4.128
 	    pi_addresses:
 	      - 172.30.4.1
 	      - 172.30.4.2
@@ -374,7 +374,7 @@ Piman has multiple different functionalities
 
     Example: 
 
-    `python3 piman.py config Dubai ./.yaml ./hosts.csv` -> launches configuration server for .yaml and hosts.csv in the root folder.
+    `python3 piman.py config Dubai ./piman.yaml ./hosts.csv` -> launches configuration server for piman.yaml and hosts.csv in the root folder.
 
 
 ### Troubleshooting

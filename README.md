@@ -71,7 +71,7 @@ pip install python-dotenv
 
 Included in PiMan is a user-interface designed to allow easier setup of configuration and pis.  Use the piman config launch option shown above.  Navigate to the webserver, hosted on port 5000.  If you are accessing the webserver from the same machine, you can use localhost:5000 in any browser.  Click on 'CONFIG' to generate the configuration file and begin configuration.  Click on 'HOSTS.CSV' to generate the hosts file and begin configuration for that.  Remember to click the apply changes button before navigating to a different page.  Once you are done applying changes, restart piman manually for those changes to take effect.
 
-By default, the webserver will modify the files .yaml and hosts.csv in the root directory of PiMan.
+By default, the webserver will modify the files piman.yaml and hosts.csv in the root directory of PiMan.
 
 If PiMan is hosted on a VM and you'd like to access the configuration UI from a different client, you can use 'ssh -N -L 5000:localhost:5000 name@city'.  Replace name@city to be the VM login that you would like to link to.  You should now be able to connect to the webserver by going to 'localhost:5000' in your browser.
 
@@ -86,12 +86,12 @@ subnet_mask:
 interface: 
 switch_count:
 switches:
-  - swtich_0_address:
+  - switch_address:
     pi_addresses:
       -
       -
       -
-  - swtich_1_address:
+  - switch_address:
     pi_addresses:
       -
       -
@@ -108,7 +108,7 @@ subnet_mask: 255.255.255.0
 interface: ens4
 switch_count: 2
 switches:
-  - swtich_0_address: 172.30.4.254
+  - switch_address: 172.30.4.254
     pi_addresses:
       - 172.30.4.13
       - 172.30.4.14
@@ -118,7 +118,7 @@ switches:
       - 172.30.4.18
       - 172.30.4.19
       - 172.30.4.20
-  - swtich_1_address: 172.30.4.128
+  - switch_address: 172.30.4.128
     pi_addresses:
       - 172.30.4.1
       - 172.30.4.2
@@ -367,7 +367,7 @@ If the value is 2: the pi will be turned off.
 
     Example: 
 
-    `python3 piman.py config Dubai ./.yaml ./hosts.csv` -> launches configuration server for .yaml and hosts.csv in the root folder.
+    `python3 piman.py config Dubai ./piman.yaml ./hosts.csv` -> launches configuration server for piman.yaml and hosts.csv in the root folder.
 
 
 

@@ -4,8 +4,8 @@ import click
 import os.path
 import yaml
 
-hosts_csv_path = "../hosts.csv"
-config_path = "../.yaml"
+hosts_csv_path = "hosts.csv"
+config_path = "piman.yaml"
 org_name = ""
 
 # remaps .pyz to .app
@@ -79,8 +79,7 @@ def config_form_post():
         currSwitch = 0
         currPi = 0
         for switch in listOfSwitches:
-            f.write("  - switch_" + str(currSwitch) +
-                    "_address: " + switch + "\n")
+            f.write("  - switch_address: " + switch + "\n")
             f.write("    pi_addresses:" + "\n")
             for num in range(0, int(numOfPis[currSwitch])):
                 f.write("      - " + listOfPis[currPi] + "\n")
@@ -112,7 +111,7 @@ def get_config():
             f.write("interface: \n")
             f.write("switch_count: \n")
             f.write("switches:\n")
-            f.write("  - switch_0_address: \n")
+            f.write("  - switch_address: \n")
             f.write("    pi_addresses:" + "\n")
             f.write("      - \n")
 
@@ -126,7 +125,7 @@ def get_config():
 @click.command()
 @click.option('--name', prompt='Your Organization',
               help='The name of your organization.')
-@click.option('--configpath', prompt='Path of config (.yaml) file',
+@click.option('--configpath', prompt='Path of config (piman.yaml) file',
               help='The path to the config file from the current working path.')
 @click.option('--hostcsvpath', prompt='Path of hosts.csv file',
               help='The path to the config file from the current working path.')
