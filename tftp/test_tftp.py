@@ -30,15 +30,15 @@ class tftp_tests(unittest.TestCase):
     '''
 
     def test_start(self):
-        tftp_port = 69
-        tftp_thread = Process(target=tftp.do_tftpd, args=[data_dir, ip, tftp_port], name="tftpd")
+        tftp_port = 6969
+        tftp_thread = tftp.TFTPServer(data_dir, tftp_port, ip)
         tftp_thread.start()
         try:
-            with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sd:
+            with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sd, open('startTest.elf', 'wb') as file:
                 sd.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+                sd.settimeout(2)
                 sleep(1)
-                file = open('startTest.elf', 'wb')
-                sd.sendto(b'\x00\x01start.elf\0', ("localhost", 69))
+                sd.sendto(b'\x00\x01start.elf\0', ("localhost", tftp_port))
                 data, addr = sd.recvfrom(516)
                 block = 0
                 orig_size = os.path.getsize("install/boot/start.elf")
@@ -60,22 +60,21 @@ class tftp_tests(unittest.TestCase):
                 difference = abs(dif)
                 os.remove("startTest.elf")
                 self.assertLessEqual(difference, 5000)
-        except KeyboardInterrupt as e:
-            sd.close()
         except Exception as e:
-            print(e)
-        tftp_thread.terminate()
+            self.fail(e)
+        finally:
+            tftp_thread.stop()
 
 
     def test_bootcode(self):
-        tftp_port = 70
-        tftp_thread = Process(target=tftp.do_tftpd, args=[data_dir, ip, tftp_port], name="tftpd")
+        tftp_port = 7070
+        tftp_thread = tftp.TFTPServer(data_dir, tftp_port, ip)
         tftp_thread.start()
         try:
-            with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sd:
+            with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sd, open('bootcodeTest.bin', 'wb') as file:
                 sd.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+                sd.settimeout(2)
                 sleep(1)
-                file = open('bootcodeTest.bin', 'wb')
                 sd.sendto(b'\x00\x01bootcode.bin\0', ("localhost", tftp_port))
                 data, addr = sd.recvfrom(516)
                 block = 0
@@ -94,15 +93,14 @@ class tftp_tests(unittest.TestCase):
                 file.close()
                 sd.close()
                 rec_size = os.path.getsize("bootcodeTest.bin")
-                dif = orig_size - rec_size
-                difference = abs(dif)
+                print(f"{orig_size} {rec_size}")
+                diff = orig_size - rec_size
                 os.remove("bootcodeTest.bin")
-                self.assertLessEqual(difference, 500)
-        except KeyboardInterrupt as e:
-            sd.close()
+                self.assertIs(diff, 0, msg=f"off by {diff} bytes")
         except Exception as e:
-            print(e)
-        tftp_thread.terminate()
+            self.fail(e)
+        finally:
+            tftp_thread.stop()
 
 
 def run_test():

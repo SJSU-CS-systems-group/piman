@@ -71,6 +71,9 @@ class TFTPServer:
         self.tftp_thread = Thread(target=self.__process_requests, name="tftpd")
         self.tftp_thread.start()
 
+    def stop(self):
+        self.server_socket.close()
+
     """
     This code is responsible for handling requests (both valid and invalid) as well as ensuring data is transferred
     properly and reliably.
