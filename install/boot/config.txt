@@ -1,1 +1,5 @@
+# i think we need a comment here
+bootcode_delay=1
+boot_delay=3
+disable_splash=1
 initramfs initramfs.gz followkernel
