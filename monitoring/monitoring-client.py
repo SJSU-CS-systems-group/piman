@@ -22,17 +22,22 @@ log_path = ""
 
 def alert(data):
     print_to_file(data)
-    url = config['DEFAULT']['slack']
-    headers = {'Content-type': 'application/json'}
-    try:
-        r = requests.post(
-            url,
-            data=json.dumps({'text': '{}'.format(data)}),
-            headers=headers,
-        )
-    except Exception as e: 
-        print_to_file("Unable to send alert - {}".format(e))
-    print_to_file("Alerting - {}: {}".format(r.status_code, r.reason))
+    if monitor_config['DEFAULT']['discord']:
+        url = monitor_config['DEFAULT']['discord']
+        info = {'username': 'piman', 'content': 'Alert:', 'embeds': []}
+        info["embeds"].append({'description': data})
+        try:
+            r = requests.post(url, data=json.dumps(info), headers={'Content-type': 'application/json'})
+        except Exception as e:
+            print_to_file("Unable to send alert - {}".format(e))
+        print_to_file("Alerting (discord) - {}: {}\n".format(r.status_code, r.reason))
+    if monitor_config['DEFAULT']['slack']:
+        url = monitor_config['DEFAULT']['slack']
+        try:
+            r = requests.post(url, data=json.dumps({'text':'{}'.format(data)}), headers={'Content-type': 'application/json'})
+        except Exception as e:
+            print_to_file("Unable to send alert - {}".format(e))
+        print_to_file("Alerting (slack) - {}: {}\n".format(r.status_code, r.reason))
 
 
 def pretty_stats(ip, event):
