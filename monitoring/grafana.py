@@ -1,3 +1,4 @@
+import os
 from sys import argv
 from datetime import datetime
 from calendar import timegm
@@ -15,21 +16,19 @@ def parse():
     try:
         f = open(log_path, "r")
         contents = f.read().split("\n \n")
-
         if '' in contents:
             contents.remove('')
-
         for pi_info in contents:
             pi = pi_info.split("\n")
-
             pi_ip = pi[0].split('@')[1]
-            time = int(float(pi[0].split(' -')[0]) * 1000)
+            ts = datetime.strptime(pi[0].split(' -')[0], '%a %b %d %H:%M:%S %Y')
+            time = ts.timestamp() * 1000
             try:
-                cpu_load = float(pi[3].replace("CPU load: ", "").replace(" ", ""))
-                ram = float(pi[4].replace("RAM usage: ", "").replace(" ", ""))
-                disk_usage = float(pi[5].replace("Disk usage: ", "").replace(" ", ""))
-                pids = int(pi[6].replace("# of PIDs: ", "").replace(" ", ""))
-                temp = float(pi[7].replace("Temperature: ", "").replace(" Celsius", "").replace(" ", ""))
+                cpu_load = float(pi[-5].replace("CPU load: ", "").replace(" ", ""))
+                ram = float(pi[-4].replace("RAM usage: ", "").replace(" ", ""))
+                disk_usage = float(pi[-3].replace("Disk usage: ", "").replace(" ", ""))
+                pids = int(pi[-2].replace("# of PIDs: ", "").replace(" ", ""))
+                temp = float(pi[-1].replace("Temperature: ", "").replace(" F", "").replace(" ", ""))
 
                 if pi_ip + " CPU" not in DATA:
                     DATA[pi_ip + " CPU"] = {time: cpu_load}
@@ -125,7 +124,7 @@ def enable_cors():
 
 @app.route("/", method=['GET', 'OPTIONS'])
 def index():
-    return "OK"
+    return "OK I'M READY"
 
 
 @app.post('/search')
