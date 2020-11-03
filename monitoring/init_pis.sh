@@ -1,7 +1,15 @@
 #!/bin/bash
 
-pswd="piman"
-hosts="../hosts.csv"
+if [ -z "$4" ]
+then
+    echo "USAGE: $0 username password hosts_file monitoring_directory"
+    exit 1
+fi
+
+usnm=$1
+pswd=$2
+hosts=$3
+mdir=$4
 
 
 while IFS= read -r line # Read hosts file one line at a time to get ip addresses of pis
@@ -13,7 +21,7 @@ do
     ip="${array[1]}"
 
     # Now run necessary commands
-    echo "Setting up pi@$ip"
-    sshpass -p $pswd scp monitoring-server.py monitoring-pi.service monitoring-pi.sh monitoring-pi-installer.sh pi@$ip:
-    sshpass -p $pswd ssh -n pi@$ip ./monitoring-pi-installer.sh # Could run each pi in parallel with &
+    echo "Setting up $usnm@$ip"
+    sshpass -p $pswd scp $mdir/monitoring-server.py $mdir/monitoring-pi.service $mdir/monitoring-pi.sh $mdir/monitoring-pi-installer.sh $usnm@$ip:
+    sshpass -p $pswd ssh -n $usnm@$ip ./monitoring-pi-installer.sh # Could run each pi in parallel with &
 done < $hosts
