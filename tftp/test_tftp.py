@@ -6,10 +6,11 @@ from multiprocessing import Process
 from tftp import tftp
 from time import sleep
 from struct import unpack, pack
+import struct
 import os
 from subprocess import Popen, PIPE
 
-data_dir = "./install/boot"
+data_dir = "./firmware/boot"
 ip = '127.0.0.1'
 
 class tftp_tests(unittest.TestCase):
@@ -33,33 +34,66 @@ class tftp_tests(unittest.TestCase):
         tftp_port = 6969
         tftp_thread = tftp.TFTPServer(data_dir, tftp_port, ip)
         tftp_thread.start()
+        filename = "start.elf"
         try:
-            with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sd, open('startTest.elf', 'wb') as file:
-                sd.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-                sd.settimeout(2)
-                sleep(1)
-                sd.sendto(b'\x00\x01start.elf\0', ("localhost", tftp_port))
-                data, addr = sd.recvfrom(516)
-                block = 0
-                orig_size = os.path.getsize("install/boot/start.elf")
-                block_number = math.floor(orig_size / 512)
-                while data:
-                    file.write(data[4:])
-                    ack_opcode = pack("!H", 4)
-                    ack_block = pack("!H", block)
-                    block = block + 1
-                    packet = ack_opcode + ack_block
-                    sd.sendto(packet, addr)
-                    data = sd.recv(516)
-                    if block == block_number:
-                        break
-                file.close()
-                sd.close()
-                rec_size = os.path.getsize("startTest.elf")
-                dif = orig_size - rec_size
-                difference = abs(dif)
-                os.remove("startTest.elf")
-                self.assertLessEqual(difference, 5000)
+            with socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM) as sd, open(f'startTest.elf',
+                                                                                          'wb') as new_file:
+                sd.bind(("", 0))
+                opcode_request = struct.pack("!H", 1)
+                opcode_data = 3
+                opcode_ack = 4
+                opcode_error = 5
+                mode = "octet"
+                # read request - opcode = 1 (for read)
+                read_request = opcode_request + f"{filename}\0{mode}\0".encode()
+                try:
+                    sd.sendto(read_request, ("localhost", tftp_port))
+                    sd.settimeout(1)
+                    (data, raddr) = sd.recvfrom(516)
+                    (opcode, error_code) = struct.unpack("!HH", data[0:4])  # error_code - block number
+                    total_bytes = 0
+                    block_numbers = set()  # to handle duplicate packets
+                    orig_size = os.path.getsize(f"{data_dir}/{filename}")
+                    try:
+                        sd.settimeout(2)
+                        while data:
+                            (opcode, block_number) = struct.unpack("!HH", data[0:4])
+                            if opcode == opcode_data:
+                                rest = data[4:]
+                                if block_number not in block_numbers:
+                                    block_numbers.add(block_number)
+                                    new_file.write(rest)
+                                    ack = struct.pack("!HH", opcode_ack, block_number)
+                                    total_bytes += len(rest)
+                                    sd.sendto(ack, raddr)
+                                    if len(data) < 512:
+                                        print("Received", total_bytes, "bytes.")
+                                        new_file.close()
+                                        new_size = os.path.getsize(f"startTest.elf")
+                                        sd.close()
+                                        self.assertEqual(new_size, total_bytes)
+                                        self.assertEqual(orig_size, total_bytes)
+                                        return
+                                        # exit(0)
+                                    try:
+                                        sd.settimeout(1)
+                                        (data, raddr) = sd.recvfrom(516)
+                                    except socket.timeout:
+                                        (data, raddr) = sd.recvfrom(516)
+                                else:
+                                    # if duplicate packet received send another ack but don't write to file
+                                    ack = struct.pack("!HH", opcode_ack, block_number)
+                                    sd.sendto(ack, raddr)
+                            else:
+                                # handle random error
+                                self.fail("opcodes don't match")
+                    except socket.timeout:
+                        new_file.close()
+                        sd.close()
+                        self.fail("Timed out")
+                except socket.timeout:
+                    print("Timeout communicating with", ("localhost", tftp_port))
+                    self.fail("Timeout communicating with server")
         except Exception as e:
             self.fail(e)
         finally:
@@ -70,33 +104,65 @@ class tftp_tests(unittest.TestCase):
         tftp_port = 7070
         tftp_thread = tftp.TFTPServer(data_dir, tftp_port, ip)
         tftp_thread.start()
+        filename = "bootcode.bin"
         try:
-            with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sd, open('bootcodeTest.bin', 'wb') as file:
-                sd.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-                sd.settimeout(2)
-                sleep(1)
-                sd.sendto(b'\x00\x01bootcode.bin\0', ("localhost", tftp_port))
-                data, addr = sd.recvfrom(516)
-                block = 0
-                orig_size = os.path.getsize("install/boot/bootcode.bin")
-                block_number = math.floor(orig_size / 512)
-                while data:
-                    file.write(data[4:])
-                    ack_opcode = pack("!H", 4)
-                    ack_block = pack("!H", block)
-                    block = block + 1
-                    packet = ack_opcode + ack_block
-                    sd.sendto(packet, addr)
-                    data = sd.recv(516)
-                    if block == block_number:
-                        break
-                file.close()
-                sd.close()
-                rec_size = os.path.getsize("bootcodeTest.bin")
-                print(f"{orig_size} {rec_size}")
-                diff = orig_size - rec_size
-                os.remove("bootcodeTest.bin")
-                self.assertIs(diff, 0, msg=f"off by {diff} bytes")
+            with socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM) as sd, open(f'bootcodeTest.bin',
+                                                                                          'wb') as new_file:
+                sd.bind(("", 0))
+                opcode_request = struct.pack("!H", 1)
+                opcode_data = 3
+                opcode_ack = 4
+                opcode_error = 5
+                mode = "octet"
+                # read request - opcode = 1 (for read)
+                read_request = opcode_request + f"{filename}\0{mode}\0".encode()
+                try:
+                    sd.sendto(read_request, ("localhost", tftp_port))
+                    sd.settimeout(1)
+                    (data, raddr) = sd.recvfrom(516)
+                    (opcode, error_code) = struct.unpack("!HH", data[0:4])  # error_code or block no
+                    total_bytes = 0
+                    block_numbers = set()  # to handle duplicate packets
+                    orig_size = os.path.getsize(f"{data_dir}/{filename}")
+                    try:
+                        sd.settimeout(2)
+                        while data:
+                            (opcode, block_number) = struct.unpack("!HH", data[0:4])
+                            if opcode == opcode_data:
+                                rest = data[4:]
+                                if block_number not in block_numbers:
+                                    block_numbers.add(block_number)
+                                    new_file.write(rest)
+                                    ack = struct.pack("!HH", opcode_ack, block_number)
+                                    total_bytes += len(rest)
+                                    sd.sendto(ack, raddr)
+                                    if len(data) < 512:
+                                        print("Received", total_bytes, "bytes.")
+                                        new_file.close()
+                                        new_size = os.path.getsize(f"bootcodeTest.bin")
+                                        sd.close()
+                                        self.assertEqual(new_size, total_bytes)
+                                        self.assertEqual(orig_size, total_bytes)
+                                        return
+                                    try:
+                                        sd.settimeout(1)
+                                        (data, raddr) = sd.recvfrom(516)
+                                    except socket.timeout:
+                                        (data, raddr) = sd.recvfrom(516)
+                                else:
+                                    # if duplicate packet received send another ack but don't write to file
+                                    ack = struct.pack("!HH", opcode_ack, block_number)
+                                    sd.sendto(ack, raddr)
+                            else:
+                                # handle random  error
+                                self.fail("opcodes don't match")
+                    except socket.timeout:
+                        new_file.close()
+                        sd.close()
+                        self.fail("Timed out")
+                except socket.timeout:
+                    print("Timeout communicating with", ("localhost", tftp_port))
+                    self.fail("Timeout communicating with server")
         except Exception as e:
             self.fail(e)
         finally:
