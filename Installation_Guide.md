@@ -26,7 +26,7 @@ Example:
 
 1. #### Connect to the VM
 	* Using your terminal, ssh into your VM using cs158b as the username and the provided password.
-	`ssh cs158b@172.31.{city_number}.254
+	`ssh cs158b@{VM_IP}
 	
 	Example: 
 
@@ -47,7 +47,7 @@ Example:
 
 
 3. #### Clone the repo on the network VM
-	`git clone https://<bitbucketusername>@bitbucket.org/SJSU-CS-systems/{city_name}`
+	`git clone https://<bitbucketusername>@bitbucket.org/{repo_name}`
 
 ### **A Note to Our Readers...**
 ---
@@ -74,11 +74,11 @@ pip install python-dotenv
 
 Included in PiMan is a user-interface designed to allow easier setup of configuration and pis.  Use the piman config launch option shown above.  
 
-‘Python3 piman.py config {city_name} {path/to/config.yaml} {path/to/hosts.csv}’
+‘Python3 piman.py config {project_name} {path/to/config.yaml} {path/to/hosts.csv}’
 
 ![config setup](https://i.imgur.com/CLgEUD2.png)
 
-If PiMan is hosted on a VM and you'd like to access the configuration UI from a different client, you can use 'ssh -N -L 5000:localhost:5000 name@city'.  Replace name@city to be the VM login that you would like to link to.  You should now be able to connect to the webserver by going to 'localhost:5000' in your browser.
+If PiMan is hosted on a VM and you'd like to access the configuration UI from a different client, you can use 'ssh -N -L 5000:localhost:5000 {usr}@{VM_IP}'. You should now be able to connect to the webserver by going to 'localhost:5000' in your browser.
 
 ![connect 5000](https://lh6.googleusercontent.com/tO6aIphSFyNeW_X7Q-MW3GHB_UoQgQnuHeZ9H9fOlbwzwI2Zlc9fBTCvuyvEItrYMrC-3Akb2DuDa0svwiu0XCMuclhZfDWZ37PqIQkMM9ypfdm40rQO-aiGsyiNO7zX8XRFOqJA)
 
@@ -190,8 +190,8 @@ For example:
 
 			[Service]
 			Type=simple
-			WorkingDirectory=/home/cs158b/{city}/monitoring
-			ExecStart=sh /home/cs158b/{city}/monitoring/monitoring_piman.sh
+			WorkingDirectory=/home/usr/piman/monitoring
+			ExecStart=sh /home/usr/piman/monitoring/monitoring_piman.sh
 			Restart=always
 			RestartSec=15
 			User=root
@@ -199,9 +199,9 @@ For example:
 			[Install]
 			WantedBy=multi-user.target
 			
-	* Make sure the monitoring folder is located under /home/cs158b/{city} or you can change the directory to match the service
+	* Make sure the monitoring folder is located under /home/usr/piman or you can change the directory to match the service
 
-	Now, link the service file into the systemd using ln -s /home/cs158b/{city}/monitoring/monitoring.service /etc/systemd/system
+	Now, link the service file into the systemd using ln -s /home/usr/piman/monitoring/monitoring.service /etc/systemd/system
 
 	**Step 2: Set up Slack channel or Discord channel for alerting in the monitoring.config**
 	
@@ -351,7 +351,7 @@ For example:
 
 	Next, place the ```grafana.sh ``` or code next to the ```grafana.py ``` file with the monitoring code. This executable will install ```bottle``` package and run grafana server
 	
-	Finally, link the ```grafana.service ``` file using ```ln -s /home/cs158b/{city}/monitoring/grafana.service /etc/systemd/system ```, then do ```sudo systemctl start grafana ```, and ```sudo systemctl enable grafana ```
+	Finally, link the ```grafana.service ``` file using ```ln -s /home/usr/piman/monitoring/grafana.service /etc/systemd/system ```, then do ```sudo systemctl start grafana ```, and ```sudo systemctl enable grafana ```
 
 
 	#### Note: Make sure to update paths in case you are running these files from your own directories
