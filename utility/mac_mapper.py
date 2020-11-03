@@ -23,8 +23,9 @@ def decToHexAddress(arg):
     return output
 
 
-def mac_mapper():
+def mac_mapper(file):
     output = []
+    mac_addresses = []
     for s in switches:
         host = s['switch_address']
         for (errorIndication, errorStatus, errorIndex, varBinds) in nextCmd(SnmpEngine(),
@@ -45,7 +46,9 @@ def mac_mapper():
                     element = str(varBind)
                     element = element.replace("SNMPv2-SMI::mib-2.17.4.3.1.2.", "").replace(" = ", ";")
                     splitArr = element.split(";")
-                    data.append(host + ',' + element.replace(splitArr[0],decToHexAddress(splitArr[0])))
+                    mac_address = element.replace(splitArr[0],decToHexAddress(splitArr[0]))
+                    mac_addresses.append(mac_address)
+                    data.append(host + ',' + mac_address)
 
 
                 print("['SWITCH ADDRESS,MAC ADDRESS;PORT']")
@@ -59,6 +62,10 @@ def mac_mapper():
 
     with open('mac_mapper.txt', "w") as f:
         f.write(text)
+
+    with open(file, "w") as f:
+        for address in mac_addresses:
+            f.write(address+"\n")
 
 
 if __name__ == "__main__":

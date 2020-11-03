@@ -34,8 +34,9 @@ def reinstall(switch_address, interface, port):
 @click.argument('switch_address')
 @click.argument('interface')
 @click.argument('port', nargs = -1)
-def mapper(switch_address, interface, port):
-    piman.mapper(switch_address,interface, port)
+@click.option('--file')
+def mapper(switch_address, interface, port, file):
+    piman.mapper(switch_address,interface, port, file)
 
 @cli.command()
 @click.argument('name')
