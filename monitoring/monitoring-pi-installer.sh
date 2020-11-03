@@ -5,7 +5,6 @@ sudo apt -y install python3-pip
 pip3 install flask-restful
 pip3 install psutil
 
-chmod +x piman.sh
 sudo cp monitoring-pi.service /etc/systemd/system
 sudo systemctl enable monitoring-pi.service
 sudo systemctl start monitoring-pi.service
