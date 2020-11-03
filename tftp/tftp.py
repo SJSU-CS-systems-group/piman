@@ -168,6 +168,11 @@ class TFTPServer:
 
                         # if no data was read, read returns b'', then EOF was reached and download complete
                         else:
+                            # sending a packet of zero data - to acknowledge end of transfer
+                            block_number += 1
+                            transfer_block_number = pack("!H", block_number)
+                            packet = transfer_opcode + transfer_block_number
+                            client_dedicated_sock.sendto(packet, addr)
                             logger.warning('download complete, closing socket')
                             client_dedicated_sock.close()
                             break
