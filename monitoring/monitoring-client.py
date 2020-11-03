@@ -86,7 +86,6 @@ def _main():
 
             time.sleep(1) # to avoid 429 - too many requests error
             r = None
-            print(ip)
 
             try:
                 print_to_file("Sending HTTP-GET to pi@{}".format(ip))
