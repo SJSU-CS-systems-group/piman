@@ -42,7 +42,7 @@ For more information, see the README for `config.py`.
 
 #### Running the server
 ```python
-def server(): 
+def server():
     tftp_thread = Thread(target=tftp.do_tftpd, args=[data_dir, ip, tftp_port], name="tftpd")
     tftp_thread.start()
 
@@ -61,7 +61,7 @@ The '&' will ensure that the threads will run in the background.
 This function should be called 1st because network booting relies on these protocols.    
 For more information about the implementation of the protocols, see their respective READMEs.  
 
-  
+
 #### Restarting a raspberry pi  
 ```python
 def restart(ports):
@@ -72,7 +72,7 @@ This function will turn the pi on the specified port off and then on.
 Although the implementation makes it seem like you can restart multiple pi's at once, it is recommended to restart them 1 at a time.  
 `/utility/power_cycle.py` is used to turn the pi off or on. For more imformation of `power_cycle.py`, see its README.  
 
-  
+
 #### Reinstalling a raspberry pi
 ```python
 def reinstall(port):
@@ -87,7 +87,48 @@ The reinstallation process uses `/utility/power_cycle.py` to turn the pi at the 
 network boot to install the pi.  
 To perform a network boot, the DHCP, TCP, and TFTP threads should be running.  
 
-  
+#### Getting mac address of rasberry pi(s)
+``` python
+def mapper(switch_address,interface, port):
+    for portNum in port:
+        power_cycle.power_cycle(switch_address,interface, portNum)
+    time.sleep(30)
+    mac_mapper.mac_mapper()
+```
+`mapper()` is a function inside the `piman.py` file. It ultimately encompasses two functions `power_cycle.power_cycle()` and `mac_mapper.mac_mapper()` which will power cycle the pis causing them to try PXE boot and afterwards getting the mac address of each specified pi. This output is then printed to console as well as `mac_mapper.txt`
+
+**How to use mapper()**
+
+The official implementation is specified as `mapper(switch_address,interface, port)`.
+
+`switch_address` (String) is your specified ip ending with .129.
+
+`interface` (Int) use `ifconfig` to figure out the interface that the pis are on
+
+`port` (int[]) is the specified remote pi that you want to access, ranging from either ports 1-10 or 11-20 depending on your team number.
+
+‘file’ (string) is an optional command that allows the user to input the discovered MAC addresses to a designated file.
+
+**Reasons to use mapper()**
+
+
+
+*   To get mac address of pi on specific port(s)
+*   Alternate way to restart remote pi’s other than the Restart method (piman.py)
+
+**Example**
+
+`sudo python3 build/piman.pyz mapper {ip}.129 {interface} {port_number(s)}`
+
+`sudo python3 build/piman.pyz mapper {ip}.129 {interface} {port_number(s)} {file}`
+
+`sudo python3 build/piman.pyz mapper 172.16.7.129 1 10 hosts.csv`
+
+`sudo python3 build/piman.pyz mapper 172.16.7.129 1 1 2 3 4 5 6 7 8 9 10`
+
+**Get Mac address of given port**
+
+
 #### There is a 4th function to handle input errors on the command line on the terminal
 ```python
 def exit_piman():
@@ -111,7 +152,7 @@ if len(argv) < 2:
         if len(argv) < 3:
             exit_piman()
         reinstall(argv[2])
-    else: 
+    else:
         power_cycle.power_cycle(10)
         server()
 ```
