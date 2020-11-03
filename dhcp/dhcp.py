@@ -583,6 +583,19 @@ UDP   = b'\x00\x43\x00\x44\x00\x00\x00\x00'
 IP    = b'\x45\x00\x00\x00\x00\x00\x40\x00\x40\x11\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
 ETHER = b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x08\x00'
 
+def getmac():
+    try:
+        yamlFile = open('/home/cs158b/batman/piman.yaml')
+        for line in yamlFile:
+            if "interface" in line:
+                line.replace(" ", "")
+                arr = line.split(":")
+                interface = arr[1]
+                mac = open('/sys/class/net/'+interface+'/address').readline()
+    except:
+        mac = "00:00:00:00:00:00"
+    return mac[0:17]
+
 def construct_packet(dmac, sip, dip, bootp):
     # BOOTP Payload
     bootp = bootp.to_bytes()
@@ -604,7 +617,7 @@ def construct_packet(dmac, sip, dip, bootp):
 
     # Ethernet Frame
     ether[0: 6] = macpack(dmac)
-    ether[6:12] = (uuid.getnode()).to_bytes(6, 'big')
+    ether[6:12] = macpack(getmac())
 
     packet = b''.join([bytes(ether), bytes(ip), bytes(udp), bootp])
     return packet
