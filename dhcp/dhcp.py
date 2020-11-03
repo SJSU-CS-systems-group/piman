@@ -585,7 +585,7 @@ ETHER = b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x08\x00'
 
 def getmac():
     try:
-        yamlFile = open('/home/cs158b/batman/piman.yaml')
+        yamlFile = open('../piman.yaml')
         for line in yamlFile:
             if "interface" in line:
                 line.replace(" ", "")
