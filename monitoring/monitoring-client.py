@@ -7,18 +7,10 @@ import time
 import requests
 import configparser
 from sys import argv
-import sys
-sys.path.append(".")
-from parse_config import config
-
-ips = []
-
-for list in config['switches']:
-    for addr in list['pi_addresses']:
-        ips.append(addr)
 
 monitor_config = configparser.ConfigParser()
 log_path = ""
+hosts_path = ""
 
 def alert(data):
     print_to_file(data)
@@ -59,7 +51,7 @@ def get_status(pi_ip):
 
 
 def check_response(response_dict, pi):
-    if response_dict['cpu_percent'] > float(config['DEFAULT']['cpu_threshold']):
+    if response_dict['cpu_percent'] > float(monitor_config['DEFAULT']['cpu_threshold']):
         alert("CPU beyond threshold on pi@{}".format(pi))
     if response_dict['memory_percent'] > float(monitor_config['DEFAULT']['mem_threshold']):
         alert("Memory beyond threshold on pi@{}".format(pi))
@@ -67,7 +59,7 @@ def check_response(response_dict, pi):
         alert("Disk Usage beyond threshold on pi@{}".format(pi))
     if response_dict['num_pids'] > int(monitor_config['DEFAULT']['pids_threshold']):
         alert("Number of PID's beyond threshold on pi@{}".format(pi))
-    if response_dict['temp'] > float(config['DEFAULT']['temperature_threshold']):
+    if response_dict['temp'] > float(monitor_config['DEFAULT']['temperature_threshold']):
         alert("Temperature beyond threshold on pi@{}".format(pi))
 
 def print_to_file(data):
@@ -78,11 +70,24 @@ def print_to_file(data):
 def _main():
     timeout = int(monitor_config['DEFAULT']['timeout'])
 
+    hostips = []
+
+    try:
+        with open(hosts_path, "r") as hostfile:
+            hosts = hostfile.readlines()
+            for line in hosts:
+                hostips.append(line.split(';')[1])
+    except IOError as ioe:
+        exit("Hosts file not found. Please specify correct path.")
+
     # Main loop, polls the 9 pis then waits
     while True:
-        for i in range(11,21):
-            ip = "172.30.1.{}".format(i)
+        for ip in hostips:
+
+            time.sleep(1) # to avoid 429 - too many requests error
             r = None
+            print(ip)
+
             try:
                 print_to_file("Sending HTTP-GET to pi@{}".format(ip))
                 r = get_status(ip)
@@ -101,11 +106,12 @@ def _main():
 
 
 if __name__ == "__main__":
-    if len(argv) < 2: 
-        print("Please give path to config file and/or log path")
+    if len(argv) < 3: 
+        print("Please give path to config file, log path, and/or hosts file")
 
     # read config
-    config.read(argv[1])
+    monitor_config.read(argv[1])
     log_path = argv[2] if len(argv) == 3 and argv[2] else "logs/monitor.log"
+    hosts_path = argv[3] if len(argv) == 4 and argv[3] else exit("Log file or Host file not found.")
 
     _main()
