@@ -89,11 +89,11 @@ To perform a network boot, the DHCP, TCP, and TFTP threads should be running.
 
 #### Getting mac address of rasberry pi(s)
 ``` python
-def mapper(switch_address,interface, port):
+def mapper(switch_address,interface, port, file):
     for portNum in port:
         power_cycle.power_cycle(switch_address,interface, portNum)
     time.sleep(30)
-    mac_mapper.mac_mapper()
+    mac_mapper.mac_mapper(file)
 ```
 `mapper()` is a function inside the `piman.py` file. It ultimately encompasses two functions `power_cycle.power_cycle()` and `mac_mapper.mac_mapper()` which will power cycle the pis causing them to try PXE boot and afterwards getting the mac address of each specified pi. This output is then printed to console as well as `mac_mapper.txt`
 
@@ -101,13 +101,13 @@ def mapper(switch_address,interface, port):
 
 The official implementation is specified as `mapper(switch_address,interface, port)`.
 
-`switch_address` (String) is your specified ip ending with .129.
+`switch_address` (String) is your specified switch ip 
 
-`interface` (Int) use `ifconfig` to figure out the interface that the pis are on
+`interface` (int) interface remote pi’s are under, typically interface “1”
 
-`port` (int[]) is the specified remote pi that you want to access, ranging from either ports 1-10 or 11-20 depending on your team number.
+`port` (int[]) is the specified remote pi’s that you want to access
 
-‘file’ (string) is an optional command that allows the user to input the discovered MAC addresses to a designated file.
+`file` (string) is an optional command that allows the user to input the discovered MAC addresses to a designated file.
 
 **Reasons to use mapper()**
 
@@ -120,9 +120,9 @@ The official implementation is specified as `mapper(switch_address,interface, po
 
 `sudo python3 build/piman.pyz mapper {ip}.129 {interface} {port_number(s)}`
 
-`sudo python3 build/piman.pyz mapper {ip}.129 {interface} {port_number(s)} {file}`
+`sudo python3 build/piman.pyz mapper {ip}.129 {interface} {port_number(s)} --file {filename}`
 
-`sudo python3 build/piman.pyz mapper 172.16.7.129 1 10 hosts.csv`
+`sudo python3 build/piman.pyz mapper 172.16.7.129 1 10 --file hosts.csv`
 
 `sudo python3 build/piman.pyz mapper 172.16.7.129 1 1 2 3 4 5 6 7 8 9 10`
 
