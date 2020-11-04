@@ -57,13 +57,13 @@ mounting() {
     send "MOUNTING"
     mkdir -p /new_root
     mount -t ext4 /dev/mmcblk0p2 /new_root
-    send "FINISHED MOUNTING"
+    send "FINISHED_MOUNTING"
 }
 
 unmount() {
     send "UNMOUNTING"
     umount /dev/mmcblk0p2
-    send "FINISHED UNMOUNTING"
+    send "FINISHED_UNMOUNTING"
 }
 
 makenode() {
@@ -99,16 +99,18 @@ do
         ;;
     boot)
         # If Pi already has OS, exit out of the script. The script in the init will then switch the root filesystem to new_root
-        send "RECIEVED BOOT"
+        send "RECEIVED_BOOT"
         mounting
         exit 0
         break
         ;;
     "busybox date "*)
-        send "RECEIVED DATE"
+        send "RECEIVED_DATE"
         $req
+	send "SET_DATE"
         ;;
     format)
+	send "RECEIVED_FORMAT"
         format
         cd /m
         # After the partitions have been formatted, send "FORMATTED" to let Piman know
@@ -121,6 +123,7 @@ do
         exit 0
         ;;
     reinstall)
+	send "RECEIVED_REINSTALL"
         mounting
         rm -rf /*
         unmount
