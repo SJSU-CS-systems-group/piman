@@ -37,68 +37,34 @@ The first step is to update all the pis' package repositories, install all depen
 
 ### On the VM
 
-1. Make the /usr/bin/piman directory and copy the monitoring directory there:
+1. Clone the piman directory into /usr/local:
 
 ```
-sudo mkdir /usr/bin/piman
-sudo cp -r /path/to/piman/monitoring /usr/bin/piman
+cd /usr/local
+sudo git clone https://github.com/SJSU-CS-systems-group/piman.git
 ```
+This will make sure that /usr/local/piman/monitoring is a path which exists on your system.
 
-2. Copy the hosts.csv file to /usr/bin/piman:
-
-```
-sudo cp /path/to/piman/hosts.csv /usr/bin/piman
-```
-
-3. Copy the monitoring.service and grafana.service files to /etc/systemd/system:
+2. Copy the monitoring.service and grafana.service files to /etc/systemd/system:
 
 ```
 sudo cp monitoring.service grafana.service /etc/systemd/system
 ```
 
-4. Install python dependencies:
+3. Install python dependencies:
 
 ```
 sudo pip3 install requests
 ```
 
 ### On the Pis
-1. Copy the files monitoring-server.py and pi-server-monitoring.service to each pi's home directory:
-
+1. Run the following script to initialize the pis, copy all needed files to them, and install and run the monitoring service on them:
 ```
-cd /path/to/piman/monitoring
-scp pi-server-monitoring.service monitoring-server.py pi@<ip address>:
-```
-where `<ip address>` is the ip address of the pi.
-
-Repeat this for all other pis.
-
-2. SSH into one of the pis:
-
-```
-ssh pi@<ip address>
-```
-where `<ip address>` is the ip address of the pi.
-
-3. Update the pi's package repositories and install python dependencies:
-```
-sudo apt-get update
-sudo apt-get install python3-pip
-sudo pip3 install psutil flask-restful
+cd /usr/local/piman/monitoring
+sudo ./init_pis.sh pi piman /usr/local/piman/monitoring/hosts.csv /usr/local/piman/monitoring
 ```
 
-4. Make the /usr/bin/piman directory on the pi:
-```
-sudo mkdir /usr/bin/piman
-```
-
-5. Move the .py and .service files to their respective locations:
-
-```
-sudo mv monitoring-server.py /usr/bin/piman
-sudo mv pi-server-monitoring.service /etc/systemd/system/monitoring.service
-```
-6. Repeat this process for all other pis.
+2. Repeat this process for all other pis.
 
 ## Setting up the monitoring service on every Pi
 
@@ -174,5 +140,4 @@ At this point, all three services should be set up: the monitoring server on the
 3. For more information on how to set up your panel, consult [this link](https://grafana.com/docs/grafana/latest/panels/add-a-panel/).
  
 ## Future Improvements
-- Make a script to automate setting up files and services on all the pis, setting up the monitoring client service, and setting up the grafana.py service. This could also include an automated install of grafana.
 - Add a table of contents and links to this README.
