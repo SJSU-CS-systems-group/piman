@@ -209,7 +209,7 @@ class Transaction(object):
         offer.server_identifier = self.server.configuration.ip
         offer.client_identifier = mac
         offer.ip_address_lease_time = self.configuration.ip_address_lease_time
-        pkt = construct_packet(mac, self.configuration.ip, ip, offer)
+        pkt = construct_packet(self.configuration.net_inter_name, mac, self.configuration.ip, ip, offer)
         self.server.unicast(pkt)
     
     def received_dhcp_request(self, request):
@@ -232,7 +232,7 @@ class Transaction(object):
         ack.dhcp_message_type = 'DHCPACK'
         ack.server_identifier = self.server.configuration.ip
         ack.ip_address_lease_time = self.configuration.ip_address_lease_time
-        pkt = construct_packet(mac, self.server.configuration.ip,
+        pkt = construct_packet(self.configuration.net_inter_name, mac, self.server.configuration.ip,
                 request.requested_ip_address or request.client_ip_address, ack)
         self.server.unicast(pkt)
 
@@ -583,7 +583,7 @@ UDP   = b'\x00\x43\x00\x44\x00\x00\x00\x00'
 IP    = b'\x45\x00\x00\x00\x00\x00\x40\x00\x40\x11\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
 ETHER = b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x08\x00'
 
-def construct_packet(dmac, sip, dip, bootp):
+def construct_packet(inter, dmac, sip, dip, bootp):
     # BOOTP Payload
     bootp = bootp.to_bytes()
     udp   = bytearray(UDP)
@@ -604,7 +604,11 @@ def construct_packet(dmac, sip, dip, bootp):
 
     # Ethernet Frame
     ether[0: 6] = macpack(dmac)
-    ether[6:12] = (uuid.getnode()).to_bytes(6, 'big')
+    try:
+        mac = open('/sys/class/net/'+inter+'/address').readline()
+    except:
+        print("Failed to get mac adress for ", inter)
+    ether[6:12] = macpack(mac[0:17])
 
     packet = b''.join([bytes(ether), bytes(ip), bytes(udp), bootp])
     return packet
