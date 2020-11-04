@@ -9,6 +9,7 @@ from random import randrange
 import uuid
 from .listener import *
 from piman import logger
+import csv
 
 
 """
@@ -192,7 +193,16 @@ class Transaction(object):
         if should_send_offer:
             self.send_offer(discovery)
         else:
-            logger.error("unknown mac_address {}. will not assign ip.".format(discovery.client_mac_address))
+            unknown_mac_addr = discovery.client_mac_address
+            logger.error("unknown mac_address {}. will not assign ip.".format(unknown_mac_addr))
+            self.mac_mapper(unknown_mac_addr)
+
+    def mac_mapper(self, unknown_mac):
+        with open('addr_database.csv', 'r') as f:
+            reader - csv.reader(f, delimiter=',')
+            for row in reader:
+                if row[0] in unknown_mac:
+                    logger.debug('{} is from the Company: {}'.format(unknown_mac, row[1]))
 
     def send_offer(self, discovery):
         # https://tools.ietf.org/html/rfc2131
