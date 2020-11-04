@@ -67,16 +67,18 @@ sudo pip3 install requests
 
 ```
 cd /path/to/piman/monitoring
-scp pi-server-monitoring.service monitoring-server.py pi@172.16.x.y:
+scp pi-server-monitoring.service monitoring-server.py pi@<ip address>:
 ```
+where `<ip address>` is the ip address of the pi.
+
 Repeat this for all other pis.
 
 2. SSH into one of the pis:
 
 ```
-ssh pi@172.16.x.y
+ssh pi@<ip address>
 ```
-where x is the group number, and y is the number of the pi.
+where `<ip address>` is the ip address of the pi.
 
 3. Update the pi's package repositories and install python dependencies:
 ```
@@ -167,7 +169,7 @@ At this point, all three services should be set up: the monitoring server on the
 
 1. Create a new dashboard by clicking on the "plus" symbol in the menu to the left, and in the dropdown which appears, "Dashboard".
 
-2. In the new dashboard, click "Add new panel". This will open a configuration page with many options. The main option to look for is within the first tab under the graph which appears, called "Query". Here is where you will specify which timeserie you would like to display on the panel. The name of the timeserie should appear as the IP of the pi, followed by the data category, e.g. `172.16.2.13 CPU LOAD`.
+2. In the new dashboard, click "Add new panel". This will open a configuration page with many options. The main option to look for is within the first tab under the graph which appears, called "Query". Here is where you will specify which timeserie you would like to display on the panel.
 
 3. For more information on how to set up your panel, consult [this link](https://grafana.com/docs/grafana/latest/panels/add-a-panel/).
  
