@@ -26,6 +26,7 @@ class TFTPServer:
     DATA_OPCODE = 3
     ACK_OPCODE = 4
     ERROR_OPCODE = 5
+    OACK_OPCODE = 6
     # TFTP data packets consist of a 2-byte opcode, 2-byte block number, and up to 512-byte data portion
     # Although we could minimize since our server is solely getting RRQ and Ack packets we could have set
     # the buffer to a more optimized value (i.e. filenames on Mac OSX can have up to 256 characters so we
@@ -136,11 +137,31 @@ class TFTPServer:
 
                 if opcode == TFTPServer.RRQ_OPCODE:
 
+                    if len(strings_in_RRQ) > 4:
+                        for index, string in enumerate(strings_in_RRQ[2:]):
+                            if string.decode() == 'tsize':
+                                temp_file = self.res_open(filename.decode())
+                                temp_file.seek(0, 2)
+                                t_size = temp_file.tell()
+
+                            if string.decode() == 'blksize':
+                                block_size = int(strings_in_RRQ[index + 1])
+
+                        #construct oack
+                        transfer_ack_opcode = pack("!H", TFTPServer.OACK_OPCODE)
+                        oack_data = 'tsize'.encode() + b'\0' + pack("!I", t_size) + b'\0'
+                        oack_data += 'block_size'.encode() + b'\0' + pack("!H", block_size) + b'\0'
+                        packet = transfer_ack_opcode + oack_data
+                        client_dedicated_sock.sendto(packet, addr)
+
                     # set the opcode for the packet we are sending
                     transfer_opcode = pack("!H", TFTPServer.DATA_OPCODE)
 
                     # read up to the appropriate 512 bytes of data
-                    data = transfer_file.read(512)
+                    if len(strings_in_RRQ) > 4:
+                        data = transfer_file.read(block_size)
+                    else:
+                        data = transfer_file.read(512)
 
                     # if data is received increment block number, contruct the packet, and send it
                     if data:
