@@ -63,9 +63,10 @@ def mac_mapper(file):
     with open('mac_mapper.txt', "w") as f:
         f.write(text)
 
-    with open(file, "w") as f:
-        for address in mac_addresses:
-            f.write(address+"\n")
+    if file != None:
+        with open(file, "w") as f:
+            for address in mac_addresses:
+                f.write(address+"\n")
 
 
 if __name__ == "__main__":
