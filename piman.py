@@ -115,11 +115,11 @@ def reinstall(switch_address, interface, port):
         f.write(network_addr)
     power_cycle.power_cycle(switch_address, interface, port)
     
-def mapper(switch_address,interface, port):
+def mapper(switch_address,interface, port, file):
     for portNum in port:
         power_cycle.power_cycle(switch_address,interface, portNum)
     time.sleep(30)
-    mac_mapper.mac_mapper()
+    mac_mapper.mac_mapper(file)
 
 def config_ui(name, config_path, hosts_csv_path):
     web_ui.start(name, config_path, hosts_csv_path)
