@@ -307,6 +307,7 @@ class WorkThread(threading.Thread):
 
 def do_ntp():
     print("NTP CODE IS RUNNING")
+    global stopFlag
     listenIp = "0.0.0.0"
     listenPort = 123
     ntpsocket = socket(AF_INET, SOCK_DGRAM)
