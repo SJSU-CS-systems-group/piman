@@ -4,6 +4,7 @@ import os
 from zipfile import ZipFile
 import io
 import time
+import signal
 
 # create the logger before doing imports since everyone is going
 # to use them
@@ -97,11 +98,13 @@ def server():
     ntp_thread = Thread(target=ntpserver.do_ntp())
     ntp_thread.start()
 
-    config_ui_thread.join()
-    tftp_thread.join()
-    dhcp_thread.join()
-    tcp_thread.join()
-    ntp_thread.join()
+    signal.pthread_kill(config_ui_thread.ident, 15) # 15 = sigterm
+    signal.pthread_kill(tftp_thread.ident, 15)
+    signal.pthread_kill(dhcp_thread.ident, 15)
+    signal.pthread_kill(tcp_thread.ident, 15)
+    # ntp_thread does not need to be killed. ntpserver takes control of the terminal
+    # when it is run, so after it is closed by a keyboard interrupt, the above
+    # lines run closing the rest of the threads. ntp_thread will already be stopped
 
 
 def restart(switch_address, interface, ports):
