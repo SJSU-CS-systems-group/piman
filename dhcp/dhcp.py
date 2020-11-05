@@ -583,6 +583,20 @@ UDP   = b'\x00\x43\x00\x44\x00\x00\x00\x00'
 IP    = b'\x45\x00\x00\x00\x00\x00\x40\x00\x40\x11\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
 ETHER = b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x08\x00'
 
+def udp_checksum(sip, dip, bootp):
+    udp_length = len(bootp) + 8
+    udp_length_b = (udp_length).to_bytes(2, 'big')
+    # pseudoUDP
+    pseudoUDP = inet_aton(sip)                    # Source IP
+    pseudoUDP += inet_aton(dip)                   # DEST ip
+    pseudoUDP += b'\x00\x11' + udp_length_b           # Zero byte, 17, UDP length
+    pseudoUDP += b'\x00\x43\x00\x44'              # SRC and DST ports
+    pseudoUDP += udp_length_b + b'\x00\x00'           # UDP length, placeholder for checksum
+    pseudoUDP += bootp
+    if len(bootp) % 2 == 1:
+        pseudoUDP += b'\x00'
+    return IP_checksum(pseudoUDP)
+
 def construct_packet(inter, dmac, sip, dip, bootp):
     # BOOTP Payload
     bootp = bootp.to_bytes()
@@ -593,7 +607,8 @@ def construct_packet(inter, dmac, sip, dip, bootp):
     # UDP Packet
     udp_length = len(bootp) + 8
     udp[4:6] = (udp_length).to_bytes(2, 'big')
-    #udp[6:7] = UDP checksum
+
+    udp[6:8] = udp_checksum(sip, dip, bootp)
 
     # IP Packet
     ip[ 2: 4] = (udp_length + 20).to_bytes(2, 'big')
