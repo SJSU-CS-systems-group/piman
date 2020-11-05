@@ -94,6 +94,7 @@ class TCPServer:
             logger.exception("keyboard interrupt")
             self.tcp_file_socket.close()
 
+    def recv_is
     def __process_requests(self, client_socket, client_addr):
         """
         This function serves the control socket's coming requests.
@@ -107,31 +108,24 @@ class TCPServer:
             date = datetime.now()
             dt_string = date.strftime('%Y%m%d%H%M.%S')
             dt_string = 'busybox date -s ' + dt_string + "\n" + "EOM\n"
+            req_dict = {   # this dict is used only when the received command results in logging only
+                RECV_RECEIVED_DATE: lambda: logger.info("TCP - pi successfully received date string"),
+                RECV_SET_DATE: lambda: logger.info("TCP - pi successfully set local datetime"),
+                RECVD_MOUNTING: lambda: logger.info("TCP - pi mounting has started"),
+                RECVD_MOUNTED: lambda: logger.info("TCP - pi successfully mounted filesystem"),
+                RECVD_UNMOUNTING: lambda: logger.info("TCP - pi unmounting has started"),
+                RECVD_UNMOUNTED: lambda: logger.info("TCP - pi successfully unmounted filesystem"),
+                RECVD_BOOT: lambda: logger.info("TCP - pi successfully received boot command"),
+                RECVD_FORMAT: lambda: logger.info("TCP - pi successfully received format command"),
+                RECVD_REINSTALL: lambda: logger.info("TCP - pi successfully received reinstall command")
+            }
             print("Sending date command to pi:", dt_string)
             client_socket.send(dt_string.encode())
             req = fd.readline()
             while req:
                 req = req.strip()
                 logger.info("TCP - received request {}".format(req))
-                if req == RECV_RECEIVED_DATE:
-                    logger.info("TCP - pi successfully received date string")
-                elif req == RECV_SET_DATE:
-                    logger.info("TCP - pi successfully set local datetime")
-                elif req == RECVD_MOUNTING:
-                    logger.info("TCP - pi mounting has started")
-                elif req == RECVD_MOUNTED:
-                    logger.info("TCP - pi successfully mounted filesystem")
-                elif req == RECVD_UNMOUNTING:
-                    logger.info("TCP - pi unmounting has started")
-                elif req == RECVD_UNMOUNTED:
-                    logger.info("TCP - pi successfully unmounted filesystem")
-                elif req == REVD_BOOT:
-                    logger.info("TCP - pi successfully received boot command")
-                elif req == RECVD_FORMAT:
-                    logger.info("TCP - pi successfully received format command")
-                elif req == RECVD_REINSTALL:
-                    logger.info("TCP - pi successfully received reinstall command")
-                elif req == RECV_IS_UNINSTALLED:
+                if req == RECV_IS_UNINSTALLED:
                     logger.info("TCT - uninstalled, sending format")
                     # this line of code is suggested by team fire
                     client_socket.send(SEND_FORMAT)
@@ -146,8 +140,10 @@ class TCPServer:
                     logger.info("TCP - is formatted, sending file")
                     break
                 else:
-                    pass
-                    #print("TCP - not supported request")
+                    try:
+                        req_dict[req]() # log changed state if command is valid and not handled above
+                    except KeyError:
+                        logger.info("TCP - unsupported request: {}".format(req)) # otherwise log unsupported command
                 req = fd.readline()
         except:
             logger.error(traceback.print_exc())
