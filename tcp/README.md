@@ -10,8 +10,8 @@ This protocol is purposefully kept simple due to simple nature of its purpose. A
 But it will be different from traditional protocols in that ports will be used to establish a connection instead of IP addresses. Since this is between Ben's vm and the Pis, we already know the IP of the server (piman).
 
 # Why is tcp.py designed like this?
-`tcp.py` is designed to like this because its purpose is just to transfer the `/../install/boot/rootfs.tgz` file to the pi.  
-But why use `tcp.py` to do this when `/../tftp/tftp.py` already exists to transfer boot files? This is due to `rootfs.tgz` being so large (~500 MB).  
+`tcp.py` is designed to like this because its purpose is just to transfer the `install/boot/rootfs.tgz` file to the pi.  
+But why use `tcp.py` to do this when `tftp/tftp.py` already exists to transfer boot files? This is due to `rootfs.tgz` being so large (~500 MB).  
 Because of the size, there must be a dedicated connection with the pi and our `piman.py` server.  
 It is also important to note that because we are transfering `root.tgz` from ben's VM instead of from a location on the internet, there is no need to use IP addresses.     
 
