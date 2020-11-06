@@ -3,35 +3,37 @@ import socket
 import sys
 import math
 from multiprocessing import Process
-from tftp import tftp
+
 from time import sleep
 from struct import unpack, pack
-import struct
 import os
+from tftp import tftp
 from subprocess import Popen, PIPE
+import struct
 
 data_dir = "./firmware/boot"
 ip = '127.0.0.1'
 
 class tftp_tests(unittest.TestCase):
     '''
-    
+
     Note: BECAUSE TFTP.PY DOES NOT TERMINATE, YOU WILL HAVE TO CTRL-C TWICE TO EXIT AFTER THE TESTS END (The threads are running still).
     To run the test cases with the piman TFTP, you will have to first run ./make_zipapp.sh to make the piman.pyz file, and then run
-    sudo python3 build/piman.pyz run-tftp-test. 
+    sudo python3 build/piman.pyz run-tftp-test.
     This needs to be done through piman.pyz because in TFTP, we open a zipfile that is the current directory, and this only works within piman.pyz.
-    
+
     test_start will test transferring the start.elf file. The reason we have a break statement is because
     of how tftp thread works. the tftp thread will always be running (while True:), so in order to continue on,
     we have to break once the last block arrives.
     test_bootcode is just like test_start but we transfer bootcode.bin. This file has a different size, so we can
     test different size.
-    
+
     If both test pass, it should say Run 2 OK with no error messages in the output. press CTRL-C twice to exit both TFTP threads now.
     '''
 
     def test_start(self):
         tftp_port = 6969
+
         tftp_thread = tftp.TFTPServer(data_dir, tftp_port, ip)
         tftp_thread.start()
         filename = "start.elf"
@@ -50,7 +52,7 @@ class tftp_tests(unittest.TestCase):
                     sd.sendto(read_request, ("localhost", tftp_port))
                     sd.settimeout(1)
                     (data, raddr) = sd.recvfrom(516)
-                    (opcode, error_code) = struct.unpack("!HH", data[0:4])  # error_code - block number
+                    (opcode, error_code) = struct.unpack("!HH", data[0:4])  # error_code or block no
                     total_bytes = 0
                     block_numbers = set()  # to handle duplicate packets
                     orig_size = os.path.getsize(f"{data_dir}/{filename}")
@@ -67,14 +69,13 @@ class tftp_tests(unittest.TestCase):
                                     total_bytes += len(rest)
                                     sd.sendto(ack, raddr)
                                     if len(data) < 512:
-                                        print("Received", total_bytes, "bytes.")
+                                        print(f"Received {total_bytes} bytes.")
                                         new_file.close()
                                         new_size = os.path.getsize(f"startTest.elf")
                                         sd.close()
                                         self.assertEqual(new_size, total_bytes)
                                         self.assertEqual(orig_size, total_bytes)
                                         return
-                                        # exit(0)
                                     try:
                                         sd.settimeout(1)
                                         (data, raddr) = sd.recvfrom(516)
@@ -97,8 +98,8 @@ class tftp_tests(unittest.TestCase):
         except Exception as e:
             self.fail(e)
         finally:
+            os.remove("./startTest.elf")
             tftp_thread.stop()
-
 
     def test_bootcode(self):
         tftp_port = 7070
@@ -137,7 +138,7 @@ class tftp_tests(unittest.TestCase):
                                     total_bytes += len(rest)
                                     sd.sendto(ack, raddr)
                                     if len(data) < 512:
-                                        print("Received", total_bytes, "bytes.")
+                                        print(f"Received {total_bytes} bytes.")
                                         new_file.close()
                                         new_size = os.path.getsize(f"bootcodeTest.bin")
                                         sd.close()
@@ -154,23 +155,28 @@ class tftp_tests(unittest.TestCase):
                                     ack = struct.pack("!HH", opcode_ack, block_number)
                                     sd.sendto(ack, raddr)
                             else:
-                                # handle random  error
+                                # handle random error
                                 self.fail("opcodes don't match")
+                                # exit(error_code)
                     except socket.timeout:
                         new_file.close()
                         sd.close()
                         self.fail("Timed out")
+                        # exit(1)
                 except socket.timeout:
                     print("Timeout communicating with", ("localhost", tftp_port))
                     self.fail("Timeout communicating with server")
+                    # exit(1)
         except Exception as e:
             self.fail(e)
         finally:
+            os.remove("./bootcodeTest.bin")
             tftp_thread.stop()
 
 
 def run_test():
     unittest.main(module=__name__, argv=sys.argv[1:])
+
 
 if __name__ == '__main__':
     unittest.main()
