@@ -3,7 +3,6 @@ import socket
 import sys
 import math
 from multiprocessing import Process
-
 from time import sleep
 from struct import unpack, pack
 import os
@@ -13,6 +12,7 @@ import struct
 
 data_dir = "./firmware/boot"
 ip = '127.0.0.1'
+
 
 class tftp_tests(unittest.TestCase):
     '''
@@ -157,16 +157,13 @@ class tftp_tests(unittest.TestCase):
                             else:
                                 # handle random error
                                 self.fail("opcodes don't match")
-                                # exit(error_code)
                     except socket.timeout:
                         new_file.close()
                         sd.close()
                         self.fail("Timed out")
-                        # exit(1)
                 except socket.timeout:
                     print("Timeout communicating with", ("localhost", tftp_port))
                     self.fail("Timeout communicating with server")
-                    # exit(1)
         except Exception as e:
             self.fail(e)
         finally:
@@ -225,7 +222,6 @@ class tftp_tests(unittest.TestCase):
                                         self.assertEqual(new_size, total_bytes)
                                         self.assertEqual(orig_size, total_bytes)
                                         return
-                                        # exit(0)
                                     try:
                                         sd.settimeout(1)
                                         (data, raddr) = sd.recvfrom(516)
@@ -251,12 +247,12 @@ class tftp_tests(unittest.TestCase):
             tftp_thread.stop()
 
     def test_1024(self):
-        tftp_port = 7878
+        tftp_port = 7979
         tftp_thread = tftp.TFTPServer("./", tftp_port, ip)
         tftp_thread.start()
         filename = "file_1024"
         try:
-            # generate file of 512 bytes
+            # generate file of 1024 bytes
             with open('file_1024', 'wb') as test_file:
                 test_file.seek(1024 - 1)
                 test_file.write(b"\0")
