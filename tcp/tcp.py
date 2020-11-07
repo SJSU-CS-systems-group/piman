@@ -94,7 +94,6 @@ class TCPServer:
             logger.exception("keyboard interrupt")
             self.tcp_file_socket.close()
 
-    def recv_is
     def __process_requests(self, client_socket, client_addr):
         """
         This function serves the control socket's coming requests.
@@ -139,9 +138,9 @@ class TCPServer:
                     logger.info("TCP - is formatted, sending file")
                     break
                 else:
-                    try:
+                    if req in req_dict:
                         req_dict[req]() # log changed state if command is valid and not handled above
-                    except KeyError:
+                    else:
                         logger.info("TCP - unsupported request: {}".format(req)) # otherwise log unsupported command
                 req = fd.readline()
         except:
