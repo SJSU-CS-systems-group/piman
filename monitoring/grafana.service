@@ -4,8 +4,8 @@ After=network.target
 
 [Service]
 Type=simple
-WorkingDirectory=/home/usr/local/share/piman/monitoring
-ExecStart=/home/usr/local/share/piman/monitoring/grafana.sh
+WorkingDirectory=/home/usr/local/piman/monitoring
+ExecStart=/home/usr/local/piman/monitoring/grafana.sh
 Restart=on-failure
 RestartSec=15
 User=root
