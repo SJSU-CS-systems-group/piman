@@ -1,20 +1,19 @@
-import unittest
-import socket
-import sys
 import math
-from multiprocessing import Process
-from time import sleep
-from struct import unpack, pack
 import os
-from tftp import tftp
-from subprocess import Popen, PIPE
+import socket
 import struct
+import sys
+import unittest
+from multiprocessing import Process
+from struct import unpack, pack
+from subprocess import Popen, PIPE
+from time import sleep
+from tftp import tftp
 
-data_dir = "./firmware/boot"
 ip = '127.0.0.1'
 
 
-class tftp_tests(unittest.TestCase):
+class TestTFTP(unittest.TestCase):
     '''
 
     Note: BECAUSE TFTP.PY DOES NOT TERMINATE, YOU WILL HAVE TO CTRL-C TWICE TO EXIT AFTER THE TESTS END (The threads are running still).
@@ -31,14 +30,26 @@ class tftp_tests(unittest.TestCase):
     If both test pass, it should say Run 2 OK with no error messages in the output. press CTRL-C twice to exit both TFTP threads now.
     '''
 
-    def test_start(self):
-        tftp_port = 6969
+    # base test start.elf
+    tftp_port = 6969
+    data_dir = "./firmware/boot"
+    filename = "start.elf"
+    test_filename = "startTest.elf"
+    file_size = -1
 
-        tftp_thread = tftp.TFTPServer(data_dir, tftp_port, ip)
+    def test(self):
+        tftp_thread = tftp.TFTPServer(self.data_dir, self.tftp_port, ip)
         tftp_thread.start()
-        filename = "start.elf"
         try:
-            with socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM) as sd, open(f'startTest.elf',
+            if self.file_size != -1:
+                # generate file of 512 bytes
+                print("here")
+                with open(self.filename, 'wb') as test_file:
+                    test_file.seek(self.file_size - 1)
+                    test_file.write(b"\0")
+                    test_file.close()
+
+            with socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM) as sd, open(f'{self.test_filename}',
                                                                                           'wb') as new_file:
                 sd.bind(("", 0))
                 opcode_request = struct.pack("!H", 1)
@@ -47,15 +58,15 @@ class tftp_tests(unittest.TestCase):
                 opcode_error = 5
                 mode = "octet"
                 # read request - opcode = 1 (for read)
-                read_request = opcode_request + f"{filename}\0{mode}\0".encode()
+                read_request = opcode_request + f"{self.filename}\0{mode}\0".encode()
                 try:
-                    sd.sendto(read_request, ("localhost", tftp_port))
+                    sd.sendto(read_request, ("localhost", self.tftp_port))
                     sd.settimeout(1)
                     (data, raddr) = sd.recvfrom(516)
-                    (opcode, error_code) = struct.unpack("!HH", data[0:4])  # error_code or block no
+                    (opcode, error_code) = struct.unpack("!HH", data[0:4])  # error_code or block numb
                     total_bytes = 0
                     block_numbers = set()  # to handle duplicate packets
-                    orig_size = os.path.getsize(f"{data_dir}/{filename}")
+                    orig_size = os.path.getsize(f"{self.data_dir}/{self.filename}")
                     try:
                         sd.settimeout(2)
                         while data:
@@ -71,7 +82,7 @@ class tftp_tests(unittest.TestCase):
                                     if len(data) < 512:
                                         print(f"Received {total_bytes} bytes.")
                                         new_file.close()
-                                        new_size = os.path.getsize(f"startTest.elf")
+                                        new_size = os.path.getsize(f"{self.test_filename}")
                                         sd.close()
                                         self.assertEqual(new_size, total_bytes)
                                         self.assertEqual(orig_size, total_bytes)
@@ -93,234 +104,38 @@ class tftp_tests(unittest.TestCase):
                         sd.close()
                         self.fail("Timed out")
                 except socket.timeout:
-                    print("Timeout communicating with", ("localhost", tftp_port))
+                    print("Timeout communicating with", ("localhost", self.tftp_port))
                     self.fail("Timeout communicating with server")
         except Exception as e:
             self.fail(e)
         finally:
-            os.remove("./startTest.elf")
+            if self.file_size != -1:
+                os.remove(f"{self.data_dir}/{self.filename}")
+            os.remove(f"./{self.test_filename}")
             tftp_thread.stop()
 
-    def test_bootcode(self):
-        tftp_port = 7070
-        tftp_thread = tftp.TFTPServer(data_dir, tftp_port, ip)
-        tftp_thread.start()
-        filename = "bootcode.bin"
-        try:
-            with socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM) as sd, open(f'bootcodeTest.bin',
-                                                                                          'wb') as new_file:
-                sd.bind(("", 0))
-                opcode_request = struct.pack("!H", 1)
-                opcode_data = 3
-                opcode_ack = 4
-                opcode_error = 5
-                mode = "octet"
-                # read request - opcode = 1 (for read)
-                read_request = opcode_request + f"{filename}\0{mode}\0".encode()
-                try:
-                    sd.sendto(read_request, ("localhost", tftp_port))
-                    sd.settimeout(1)
-                    (data, raddr) = sd.recvfrom(516)
-                    (opcode, error_code) = struct.unpack("!HH", data[0:4])  # error_code or block no
-                    total_bytes = 0
-                    block_numbers = set()  # to handle duplicate packets
-                    orig_size = os.path.getsize(f"{data_dir}/{filename}")
-                    try:
-                        sd.settimeout(2)
-                        while data:
-                            (opcode, block_number) = struct.unpack("!HH", data[0:4])
-                            if opcode == opcode_data:
-                                rest = data[4:]
-                                if block_number not in block_numbers:
-                                    block_numbers.add(block_number)
-                                    new_file.write(rest)
-                                    ack = struct.pack("!HH", opcode_ack, block_number)
-                                    total_bytes += len(rest)
-                                    sd.sendto(ack, raddr)
-                                    if len(data) < 512:
-                                        print(f"Received {total_bytes} bytes.")
-                                        new_file.close()
-                                        new_size = os.path.getsize(f"bootcodeTest.bin")
-                                        sd.close()
-                                        self.assertEqual(new_size, total_bytes)
-                                        self.assertEqual(orig_size, total_bytes)
-                                        return
-                                    try:
-                                        sd.settimeout(1)
-                                        (data, raddr) = sd.recvfrom(516)
-                                    except socket.timeout:
-                                        (data, raddr) = sd.recvfrom(516)
-                                else:
-                                    # if duplicate packet received send another ack but don't write to file
-                                    ack = struct.pack("!HH", opcode_ack, block_number)
-                                    sd.sendto(ack, raddr)
-                            else:
-                                # handle random error
-                                self.fail("opcodes don't match")
-                    except socket.timeout:
-                        new_file.close()
-                        sd.close()
-                        self.fail("Timed out")
-                except socket.timeout:
-                    print("Timeout communicating with", ("localhost", tftp_port))
-                    self.fail("Timeout communicating with server")
-        except Exception as e:
-            self.fail(e)
-        finally:
-            os.remove("./bootcodeTest.bin")
-            tftp_thread.stop()
 
-    def test_512(self):
-        tftp_port = 7878
-        tftp_thread = tftp.TFTPServer("./", tftp_port, ip)
-        tftp_thread.start()
-        filename = "file_512"
-        try:
-            # generate file of 512 bytes
-            with open('file_512', 'wb') as test_file:
-                test_file.seek(512 - 1)
-                test_file.write(b"\0")
-                test_file.close()
+class TestBootcode(TestTFTP):
+    tftp_port = 7676
+    data_dir = "./firmware/boot"
+    filename = "bootcode.bin"
+    test_filename = "bootcodeTest.bin"
 
-            with socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM) as sd, open(f'test_file_512',
-                                                                                          'wb') as new_file:
-                sleep(1)
-                sd.bind(("", 0))
-                opcode_request = struct.pack("!H", 1)
-                opcode_data = 3
-                opcode_ack = 4
-                opcode_error = 5
-                mode = "octet"
-                # read request - opcode = 1 (for read)
-                read_request = opcode_request + f"{filename}\0{mode}\0".encode()
-                try:
-                    sd.sendto(read_request, ("localhost", tftp_port))
-                    sd.settimeout(1)
-                    (data, raddr) = sd.recvfrom(516)
-                    (opcode, error_code) = struct.unpack("!HH", data[0:4])  # error_code or block no
-                    total_bytes = 0
-                    block_numbers = set()  # to handle duplicate packets
-                    orig_size = os.path.getsize(f"{filename}")
-                    os.remove("file_512")
-                    try:
-                        sd.settimeout(2)
-                        while data:
-                            (opcode, block_number) = struct.unpack("!HH", data[0:4])
-                            if opcode == opcode_data:
-                                rest = data[4:]
-                                if block_number not in block_numbers:
-                                    block_numbers.add(block_number)
-                                    new_file.write(rest)
-                                    ack = struct.pack("!HH", opcode_ack, block_number)
-                                    total_bytes += len(rest)
-                                    sd.sendto(ack, raddr)
-                                    if len(data) < 512:
-                                        print(f"Received {total_bytes} bytes.")
-                                        new_file.close()
-                                        new_size = os.path.getsize(f"test_file_512")
-                                        sd.close()
-                                        self.assertEqual(new_size, total_bytes)
-                                        self.assertEqual(orig_size, total_bytes)
-                                        return
-                                    try:
-                                        sd.settimeout(1)
-                                        (data, raddr) = sd.recvfrom(516)
-                                    except socket.timeout:
-                                        (data, raddr) = sd.recvfrom(516)
-                                else:
-                                    # if duplicate packet received send another ack but don't write to file
-                                    ack = struct.pack("!HH", opcode_ack, block_number)
-                                    sd.sendto(ack, raddr)
-                            else:
-                                self.fail("opcodes don't match")
-                    except socket.timeout:
-                        new_file.close()
-                        sd.close()
-                        self.fail("Timed out")
-                except socket.timeout:
-                    print("Timeout communicating with", ("localhost", tftp_port))
-                    self.fail("Timeout communicating with server")
-        except Exception as e:
-            self.fail(e)
-        finally:
-            os.remove("./test_file_512")
-            tftp_thread.stop()
 
-    def test_1024(self):
-        tftp_port = 7979
-        tftp_thread = tftp.TFTPServer("./", tftp_port, ip)
-        tftp_thread.start()
-        filename = "file_1024"
-        try:
-            # generate file of 1024 bytes
-            with open('file_1024', 'wb') as test_file:
-                test_file.seek(1024 - 1)
-                test_file.write(b"\0")
-                test_file.close()
+class Test_512(TestTFTP):
+    tftp_port = 7878
+    data_dir = "."
+    filename = "file_512"
+    test_filename = "test_file_512"
+    file_size = 512
 
-            with socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM) as sd, open(f'test_file_1024',
-                                                                                          'wb') as new_file:
-                sleep(1)
-                sd.bind(("", 0))
-                opcode_request = struct.pack("!H", 1)
-                opcode_data = 3
-                opcode_ack = 4
-                opcode_error = 5
-                mode = "octet"
-                # read request - opcode = 1 (for read)
-                read_request = opcode_request + f"{filename}\0{mode}\0".encode()
-                try:
-                    sd.sendto(read_request, ("localhost", tftp_port))
-                    sd.settimeout(1)
-                    (data, raddr) = sd.recvfrom(516)
-                    (opcode, error_code) = struct.unpack("!HH", data[0:4])  # error_code or block no
-                    total_bytes = 0
-                    block_numbers = set()  # to handle duplicate packets
-                    orig_size = os.path.getsize(f"{filename}")
-                    os.remove("file_1024")
-                    try:
-                        sd.settimeout(2)
-                        while data:
-                            (opcode, block_number) = struct.unpack("!HH", data[0:4])
-                            if opcode == opcode_data:
-                                rest = data[4:]
-                                if block_number not in block_numbers:
-                                    block_numbers.add(block_number)
-                                    new_file.write(rest)
-                                    ack = struct.pack("!HH", opcode_ack, block_number)
-                                    total_bytes += len(rest)
-                                    sd.sendto(ack, raddr)
-                                    if len(data) < 512:
-                                        print(f"Received {total_bytes} bytes.")
-                                        new_file.close()
-                                        new_size = os.path.getsize(f"test_file_1024")
-                                        sd.close()
-                                        self.assertEqual(new_size, total_bytes)
-                                        self.assertEqual(orig_size, total_bytes)
-                                        return
-                                    try:
-                                        sd.settimeout(1)
-                                        (data, raddr) = sd.recvfrom(516)
-                                    except socket.timeout:
-                                        (data, raddr) = sd.recvfrom(516)
-                                else:
-                                    # if duplicate packet received send another ack but don't write to file
-                                    ack = struct.pack("!HH", opcode_ack, block_number)
-                                    sd.sendto(ack, raddr)
-                            else:
-                                self.fail("opcodes don't match")
-                    except socket.timeout:
-                        new_file.close()
-                        sd.close()
-                        self.fail("Timed out")
-                except socket.timeout:
-                    print("Timeout communicating with", ("localhost", tftp_port))
-                    self.fail("Timeout communicating with server")
-        except Exception as e:
-            self.fail(e)
-        finally:
-            os.remove("./test_file_1024")
-            tftp_thread.stop()
+
+class Test_1024(TestTFTP):
+    tftp_port = 7979
+    data_dir = "."
+    filename = "file_1024"
+    test_filename = "test_file_1024"
+    file_size = 1024
 
 
 def run_test():
