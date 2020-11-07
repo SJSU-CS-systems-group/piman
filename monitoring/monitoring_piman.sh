@@ -8,5 +8,5 @@ echo 1 > /proc/sys/net/ipv4/ip_forward
 
 echo "----------------------PIMAN MONITOIRNG START---------------------"
 # run the pi client keep asking monitoring data from each of the Pi
-cd /usr/bin/piman/monitoring
-python3 monitoring-client.py monitoring.config > logs/monitoring.log
+cd /usr/local/piman/monitoring
+python3 monitoring-client.py monitoring.config logs/monitor.log /usr/local/piman/hosts.csv
