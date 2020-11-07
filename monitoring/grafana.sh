@@ -3,5 +3,5 @@
 cd --
 python3 -m pip install bottle
 
-cd /usr/bin/piman/monitoring
+cd /usr/local/piman/monitoring
 python3 grafana.py logs/monitor.log
