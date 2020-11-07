@@ -24,6 +24,8 @@ def parse():
             ts = datetime.strptime(pi[0].split(' -')[0], '%a %b %d %H:%M:%S %Y')
             time = ts.timestamp() * 1000
             try:
+                #The Arrays use negative indicies so that that, if the pi goes above threshold or has to display an error message,
+                #Grafana will still be able to receive the numbers and update the dashboards.
                 cpu_load = float(pi[-5].replace("CPU load: ", "").replace(" ", ""))
                 ram = float(pi[-4].replace("RAM usage: ", "").replace(" ", ""))
                 disk_usage = float(pi[-3].replace("Disk usage: ", "").replace(" ", ""))
