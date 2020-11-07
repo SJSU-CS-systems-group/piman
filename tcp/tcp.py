@@ -124,7 +124,6 @@ class TCPServer:
             req = fd.readline()
             while req:
                 req = req.strip()
-                logger.info("TCP - received request {}".format(req))
                 if req == RECV_IS_UNINSTALLED:
                     logger.info("TCT - uninstalled, sending format")
                     # this line of code is suggested by team fire
