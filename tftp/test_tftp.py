@@ -43,7 +43,6 @@ class TestTFTP(unittest.TestCase):
         try:
             if self.file_size != -1:
                 # generate file of 512 bytes
-                print("here")
                 with open(self.filename, 'wb') as test_file:
                     test_file.seek(self.file_size - 1)
                     test_file.write(b"\0")
