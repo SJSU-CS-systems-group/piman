@@ -190,8 +190,8 @@ For example:
 
 			[Service]
 			Type=simple
-			WorkingDirectory=/home/usr/local/piman/monitoring
-			ExecStart=/home/usr/local/piman/monitoring/monitoring_piman.sh
+			WorkingDirectory=/usr/local/piman/monitoring
+			ExecStart=/usr/local/piman/monitoring/monitoring_piman.sh
 			Restart=always
 			RestartSec=15
 			User=root
@@ -199,9 +199,9 @@ For example:
 			[Install]
 			WantedBy=multi-user.target
 			
-	* Make sure the monitoring folder is located under /home/usr/local/piman or you can change the directory to match the service
+	* Make sure the monitoring folder is located under /usr/local/piman or you can change the directory to match the service
 
-	Now, link the service file into the systemd using ln -s /home/usr/local/piman/monitoring/monitoring.service /etc/systemd/system
+	Now, link the service file into the systemd using ln -s /usr/local/piman/monitoring/monitoring.service /etc/systemd/system
 
 	**Step 2: Set up Slack channel or Discord channel for alerting in the monitoring.config**
 	
@@ -351,7 +351,7 @@ For example:
 
 	Next, place the ```grafana.sh ``` or code next to the ```grafana.py ``` file with the monitoring code. This executable will install ```bottle``` package and run grafana server
 	
-	Finally, link the ```grafana.service ``` file using ```ln -s /home/usr/local/piman/monitoring/grafana.service /etc/systemd/system ```, then do ```sudo systemctl start grafana ```, and ```sudo systemctl enable grafana ```
+	Finally, link the ```grafana.service ``` file using ```ln -s /usr/local/piman/monitoring/grafana.service /etc/systemd/system ```, then do ```sudo systemctl start grafana ```, and ```sudo systemctl enable grafana ```
 
 
 	#### Note: Make sure to update paths in case you are running these files from your own directories
