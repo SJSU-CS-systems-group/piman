@@ -8,6 +8,15 @@ from datetime import datetime
 RECV_IS_INSTALLED = "IS_INSTALLED"
 RECV_IS_UNINSTALLED = "IS_UNINSTALLED"
 RECV_IS_FORMATTED = "IS_FORMATTED"
+RECV_RECEIVED_DATE = "RECEIVED_DATE"
+RECV_SET_DATE = "SET_DATE"
+RECVD_MOUNTING = "MOUNTING"
+RECVD_MOUNTED = "FINISHED_MOUNTING"
+RECVD_UNMOUNTING = "UNMOUNTING"
+RECVD_UNMOUNTED = "FINISHED_UNMOUNTING"
+RECVD_BOOT = "RECEIVED_BOOT"
+RECVD_FORMAT = "RECEIVED_FORMAT"
+RECVD_REINSTALL = "RECEIVED_REINSTALL"
 
 # message sent to PI
 SEND_BOOT = b"boot\n" + b"EOM\n"
@@ -98,12 +107,22 @@ class TCPServer:
             date = datetime.now()
             dt_string = date.strftime('%Y%m%d%H%M.%S')
             dt_string = 'busybox date -s ' + dt_string + "\n" + "EOM\n"
+            req_dict = {   # this dict is used only when the received command results in logging only
+                RECV_RECEIVED_DATE: lambda: logger.info("TCP - pi successfully received date string"),
+                RECV_SET_DATE: lambda: logger.info("TCP - pi successfully set local datetime"),
+                RECVD_MOUNTING: lambda: logger.info("TCP - pi mounting has started"),
+                RECVD_MOUNTED: lambda: logger.info("TCP - pi successfully mounted filesystem"),
+                RECVD_UNMOUNTING: lambda: logger.info("TCP - pi unmounting has started"),
+                RECVD_UNMOUNTED: lambda: logger.info("TCP - pi successfully unmounted filesystem"),
+                RECVD_BOOT: lambda: logger.info("TCP - pi successfully received boot command"),
+                RECVD_FORMAT: lambda: logger.info("TCP - pi successfully received format command"),
+                RECVD_REINSTALL: lambda: logger.info("TCP - pi successfully received reinstall command")
+            }
             print("Sending date command to pi:", dt_string)
             client_socket.send(dt_string.encode())
             req = fd.readline()
             while req:
                 req = req.strip()
-                logger.info("TCP - recieved request {}".format(req))
                 if req == RECV_IS_UNINSTALLED:
                     logger.info("TCT - uninstalled, sending format")
                     # this line of code is suggested by team fire
@@ -119,8 +138,10 @@ class TCPServer:
                     logger.info("TCP - is formatted, sending file")
                     break
                 else:
-                    pass
-                    #print("TCP - not supported request")
+                    if req in req_dict:
+                        req_dict[req]() # log changed state if command is valid and not handled above
+                    else:
+                        logger.info("TCP - unsupported request: {}".format(req)) # otherwise log unsupported command
                 req = fd.readline()
         except:
             logger.error(traceback.print_exc())
