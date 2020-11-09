@@ -1,4 +1,9 @@
 #!/bin/bash
+if [[ $UID -eq 0 ]]
+then 
+   echo "Do not run $0 as root"
+   exit 2
+fi
 rm -rf build
 mkdir build
 PYTHONUSERBASE=$PWD/build python3 -m pip install --ignore-installed click pysnmp Flask python-dotenv PyYAML
