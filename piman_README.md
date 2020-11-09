@@ -128,6 +128,23 @@ The official implementation is specified as `mapper(switch_address,interface, po
 
 **Get Mac address of given port**
 
+#### Starting monitoring on rasberry pis
+``` python
+def monitoring():
+    monitor_thread= Thread(target = monitoring_client.start_from_piman, name= "monitoring")
+    monitor_thread.start()
+    monitor_thread.join()
+```
+`monitoring()` is a function inside the `piman.py` file. This function will start the monitoring client and servers through piman. A thread will start to initalize monitoring and invoke the function `start_from_piman()` from file `monitoring_client.py`
+
+**Example**
+
+`sudo python3 build/piman.pyz monitoring`
+
+**Additional notes on monitoring**
+
+`monitor-client.py` has been renamed to `monitor_client.py` in order to accomodate python's importing standards.
+
 
 #### There is a 4th function to handle input errors on the command line on the terminal
 ```python
