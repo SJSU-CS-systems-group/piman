@@ -200,6 +200,9 @@ class Transaction(object):
         offer.parameter_order = discovery.parameter_request_list
         mac = discovery.client_mac_address
         ip = offer.your_ip_address = self.server.get_ip_address(discovery)
+        # If IP address can not be assigned, do not send offer and return. 
+        if ip == None:
+            return 
         offer.transaction_id = discovery.transaction_id
         offer.relay_agent_ip_address = discovery.relay_agent_ip_address
         offer.client_mac_address = mac
@@ -229,6 +232,9 @@ class Transaction(object):
         requested_ip_address = request.requested_ip_address
         ack.client_ip_address = request.client_ip_address or '0.0.0.0'
         ack.your_ip_address = self.server.get_ip_address(request)
+        # If IP address is invalid / can not be assigned, do not send ack and return. 
+        if ack.your_ip_address == None:
+            return 
         ack.dhcp_message_type = 'DHCPACK'
         ack.server_identifier = self.server.configuration.ip
         ack.ip_address_lease_time = self.configuration.ip_address_lease_time
@@ -421,6 +427,8 @@ class DHCPServer(object):
         self.configuration = configuration
         self.socket = socket(type = SOCK_DGRAM)
         self.socket.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
+        interface = self.configuration.net_inter_name.encode()         
+        self.socket.setsockopt(SOL_SOCKET, SO_BINDTODEVICE, interface)  
         self.socket.bind(('', 67))  # Using '' instead to broadcast to all
         self.delay_worker = DelayWorker()
         self.closed = False
@@ -493,31 +501,6 @@ class DHCPServer(object):
                     ip = host.ip
             str_known_ip = "known ip: " + str(ip)
             logger.info(str_known_ip)
-        if ip is None and self.is_valid_client_address(requested_ip_address):
-            # 2. choose valid requested ip address
-            ip = requested_ip_address
-            str_valid_ip = "valid ip: " + str(ip)
-            logger.info(str_valid_ip)
-        if ip is None:
-            # 3. choose new, free ip address
-            chosen = False
-            network_hosts = self.hosts.get(ip=self.configuration.network_filter())
-            for ip in self.configuration.all_ip_addresses():
-                if not any(host.ip == ip for host in network_hosts):
-                    chosen = True
-                    break
-            if not chosen:
-                # 4. reuse old valid ip address
-                network_hosts.sort(key=lambda host: host.last_used)
-                ip = network_hosts[0].ip
-                assert self.is_valid_client_address(ip)
-            str_new_ip = "new ip: " + str(ip)
-            logger.info(str_new_ip)
-        if not any([host.ip == ip for host in known_hosts]):
-            str_add_mac = "add " + str(mac_address) + "ip: " + str(ip) + "hostname: " + str(packet.host_name)
-            logger.info(str_add_mac)
-            #print('add', mac_address, ip, packet.host_name)
-            self.hosts.replace(Host(mac_address, ip, packet.host_name or '', time.time()))
         return ip
 
     @property
