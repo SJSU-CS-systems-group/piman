@@ -8,7 +8,7 @@ import socket
 from random import randrange
 import uuid
 from .listener import *
-from piman import logger
+from logger import logger
 
 
 """

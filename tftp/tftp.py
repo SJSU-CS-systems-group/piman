@@ -7,7 +7,7 @@ from zipfile import ZipFile
 
 import io
 import os
-from piman import logger
+from logger import logger
 
 """
 This code is modified following Prof. Reed suggestion

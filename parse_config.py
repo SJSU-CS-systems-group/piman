@@ -3,7 +3,7 @@ import sys
 import glob
 import yaml
 
-from piman import logger
+from logger import logger
 
 config = {}
 
