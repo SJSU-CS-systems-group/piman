@@ -4,13 +4,13 @@
 [Overview](##Overview)  
 [Preparation](##Preparation)  
 [On The VM](###On-The-VM)  
-[On The Pis](###on-the-pis)  
+[on the pis](###on-the-pis)  
 [Setting up the monitoring service on every Pi](##Setting-up-the-monitoring-service-on-every-Pi)  
 [Setting MONITORING_LOG_PATH environment variable for monitoring service](##Setting-MONITORING-LOG_PATH-environment-variable-for-monitoring-service)  
-[Setting up the monitoring client service on the VM](#)  
-[Setting up the grafana.py service](#)  
-[Installing and starting Grafana](#)  
-[Adding the SimpleJSON data source](##adding-the-SimpleJSON-data-source)  
+[Setting up the monitoring client service on the VM](##Setting-up-the-monitoring-client-service-on-the-VM)  
+[Setting up the grafana.py service](##Setting-up-the-grafana.py-service)  
+[Installing and starting Grafana](##Installing-and-starting-Grafana)  
+[Adding the SimpleJSON data source](##Adding-the-SimpleJSON-data-source)  
 [Making the dashboard](##Making-the-dashboard)  
 
 # Setting Up Monitoring With Grafana
@@ -73,7 +73,7 @@ sudo pip3 install requests
 ```
 
 
-### On the Pis
+### on the pis
 1. Run the following script to initialize the pis, copy all needed files to them, and install and run the monitoring service on them:
 ```
 cd /usr/local/piman/monitoring
@@ -189,11 +189,8 @@ At this point, all three services should be set up: the monitoring server on the
 2. In the new dashboard, click "Add new panel". A panel will allow you to organize the monitoring data. This will open a configuration page with many options.  
 
   At the top you can edit the name of the panel.  
-
   The main option to look for is within the first tab under the graph which appears, called "Query". Here is where you will specify which timeseries you would like to display on the panel.  
-
   Simply click on 'select metric' and select a piece of data from one of the pis on the drop down menu.  
-
   Each query displays only one statistic for each pi, so naturally you will need to add more queries with the '+ query' button to display the same statistic but for the other pis.  
 
 3. On the right side, under 'visualization' there are options to modify how the data is viewed. The options include using a graph or a gauge. By default, a graph is chosen. The 'display' option underneath 'visualization' shows how each query is shown, and the default is a line.
