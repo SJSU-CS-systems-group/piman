@@ -1,7 +1,7 @@
 # Table of Contents
 
 [Setting Up Monitoring With Grafana](#1)
-[Overview](#2)
+[Overview](##Overview)
 [Preparation](#3)
 [On The VM](#4)
 [On The Pis](#5)
@@ -13,9 +13,9 @@
 [Adding the SimpleJSON data source](#11)
 [Making the dashboard](#12)
 
-# Setting Up Monitoring With Grafana {#1}
+# Setting Up Monitoring With Grafana #1
 
-## Overview {#2}
+## Overview #2
 
 The monitoring service on every pi is a server which, when queried, will retrieve system data from the pi. The data currently collected includes:
 * CPU load
@@ -46,11 +46,11 @@ The last component to monitoring is installing Grafana itself. Grafana must be i
 
 The following sections will explain the steps to set up monitoring in detail.
 
-## Preparation {#3}
+## Preparation #3
 
 The first step is to update all the pis' package repositories, install all dependencies, make all necessary directories, and copy files to the right locations.
 
-### On the VM {#4}
+### On the VM #4
 
 1. Clone the piman directory into /usr/local:
 
