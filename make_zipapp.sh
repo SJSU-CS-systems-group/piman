@@ -28,6 +28,7 @@ mkdir -p build/piman.app/install/boot
 cp -r firmware/boot build/piman.app/install/
 cp -r install/boot build/piman.app/install/
 cp -r config_ui build/piman.app/config_ui
+cp dhcp/addr_database.csv build/piman.app/install
 # we don't want crypto stuff since it has native code
 rm -r build/piman.app/Crypto*
 python3 -m zipapp build/piman.app
