@@ -2,7 +2,7 @@ from threading import Thread
 from socket import AF_INET, SOCK_STREAM, socket
 from struct import unpack, pack
 import traceback
-from piman import logger
+from logger import logger
 from datetime import datetime
 
 RECV_IS_INSTALLED = "IS_INSTALLED"
