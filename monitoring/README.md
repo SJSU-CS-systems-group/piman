@@ -169,9 +169,13 @@ At this point, all three services should be set up: the monitoring server on the
 
 ## Making the dashboard
 
-1. Create a new dashboard by clicking on the "plus" symbol in the menu to the left, and in the dropdown which appears, "Dashboard". 
+1. Create a new dashboard by clicking on the "plus" symbol in the menu to the left, and in the dropdown which appears, "Dashboard".
 
-2. In the new dashboard, click "Add new panel". A panel will allow you to organize the monitoring data. This will open a configuration page with many options. At the top you can edit the name of the panel. The main option to look for is within the first tab under the graph which appears, called "Query". Here is where you will specify which timeserie you would like to display on the panel. You simply click on 'select metric' and select a piece of data from one of the pis on the drop down menu. Each query displays only one statistic for each pi, so naturally you will need to add more queries with the '+ query' button to display the same statistic but for the other pis.
+2. In the new dashboard, click "Add new panel". A panel will allow you to organize the monitoring data. This will open a configuration page with many options.
+  At the top you can edit the name of the panel.
+  The main option to look for is within the first tab under the graph which appears, called "Query". Here is where you will specify which timeseries you would like to display on the panel. 
+  Simply click on 'select metric' and select a piece of data from one of the pis on the drop down menu.
+  Each query displays only one statistic for each pi, so naturally you will need to add more queries with the '+ query' button to display the same statistic but for the other pis.
 
 3. On the right side, under 'visualization' there are options to modify how the data is viewed. The options include using a graph or a gauge. By default, a graph is chosen. The 'display' option underneath 'visualization' shows how each query is shown, and the default is a line.
 
