@@ -201,7 +201,7 @@ class Transaction(object):
         with open('addr_database.csv', 'r') as f:
             reader - csv.reader(f, delimiter=',')
             for row in reader:
-                if row[0] in unknown_mac:
+                if unknown_mac.startswith(row[0]):
                     logger.debug('{} is from the Company: {}'.format(unknown_mac, row[1]))
 
     def send_offer(self, discovery):
