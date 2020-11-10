@@ -57,6 +57,7 @@ sudo cp monitoring.service grafana.service /etc/systemd/system
 sudo pip3 install requests
 ```
 
+
 ### On the Pis
 1. Run the following script to initialize the pis, copy all needed files to them, and install and run the monitoring service on them:
 ```
@@ -75,6 +76,41 @@ sudo systemctl daemon-reload
 sudo systemctl start monitoring
 sudo systemctl status monitoring
 ```
+
+## Setting MONITORING_LOG_PATH envrionment variable for monitoring service
+
+Note: You can use another terminal editor, but the commands may be different than these
+
+- vim ~/.bashrc
+
+- press 'i' key
+- at the top, or wherever you prefer add 'export MONITORING_LOG_PATH="relative/path/to/monitor/logfile"
+- press 'esc' key
+- enter ':wq' - this will save changes and exit
+- enter in terminal 'source ~/.bashrc'
+
+Note: this will permanently save your monitor file path as an environment variable and will be used in 
+    grafana.sh and monitoring-piman.sh
+
+    In both, it checks if the environment variable is set and if not will exit with exit code of 1.
+        If this happens, set the environment var.
+    
+    The purpose of the environment variable is to set it once and not have to worry about it again.
+
+    you can check the output of the environment var you set with:
+        - in .sh: "echo ${MONITORING_LOG_PATH}"
+        - in terminal: echo $MONITORING_LOG_PATH
+        both should be the same result
+    
+    If you don't 'source ~/.bashrc' after editing the  '~/.bashrc' file, the environment will not be set.
+        If you have any doubts, always 'source ~/.bashrc'
+    
+    There should be a ~/.bashrc file, but if not do:
+        - 'cd'
+        - 'ls- la | more'
+            - this will show you which bash file you have
+            - find it and edit that one instead
+
 
 ## Setting up the monitoring client service on the VM
 
