@@ -1,21 +1,21 @@
 # Table of Contents
 
-[Setting Up Monitoring With Grafana](#1)
-[Overview](##Overview)
-[Preparation](#3)
-[On The VM](#4)
-[On The Pis](#5)
-[Setting up the monitoring service on every Pi](#6)
-[Setting MONITORING_LOG_PATH environment variable for monitoring service](#7)
-[Setting up the monitoring client service on the VM](#8)
-[Setting up the grafana.py service](#9)
-[Installing and starting Grafana](#10)
-[Adding the SimpleJSON data source](#11)
-[Making the dashboard](#12)
+[Setting Up Monitoring With Grafana](#1)  
+[Overview](##Overview)  
+[Preparation](#3)  
+[On The VM](#4)  
+[On The Pis](#5)  
+[Setting up the monitoring service on every Pi](#6)  
+[Setting MONITORING_LOG_PATH environment variable for monitoring service](#7)  
+[Setting up the monitoring client service on the VM](#8)  
+[Setting up the grafana.py service](#9)  
+[Installing and starting Grafana](#10)  
+[Adding the SimpleJSON data source](#11)  
+[Making the dashboard](#12)  
 
-# Setting Up Monitoring With Grafana #1
+# Setting Up Monitoring With Grafana 1
 
-## Overview #2
+## Overview 2
 
 The monitoring service on every pi is a server which, when queried, will retrieve system data from the pi. The data currently collected includes:
 * CPU load
@@ -46,11 +46,11 @@ The last component to monitoring is installing Grafana itself. Grafana must be i
 
 The following sections will explain the steps to set up monitoring in detail.
 
-## Preparation #3
+## Preparation 3
 
 The first step is to update all the pis' package repositories, install all dependencies, make all necessary directories, and copy files to the right locations.
 
-### On the VM #4
+### On the VM 4
 
 1. Clone the piman directory into /usr/local:
 
@@ -186,11 +186,11 @@ At this point, all three services should be set up: the monitoring server on the
 
 1. Create a new dashboard by clicking on the "plus" symbol in the menu to the left, and in the dropdown which appears, "Dashboard".
 
-2. In the new dashboard, click "Add new panel". A panel will allow you to organize the monitoring data. This will open a configuration page with many options.
-  At the top you can edit the name of the panel.
-  The main option to look for is within the first tab under the graph which appears, called "Query". Here is where you will specify which timeseries you would like to display on the panel.
-  Simply click on 'select metric' and select a piece of data from one of the pis on the drop down menu.
-  Each query displays only one statistic for each pi, so naturally you will need to add more queries with the '+ query' button to display the same statistic but for the other pis.
+2. In the new dashboard, click "Add new panel". A panel will allow you to organize the monitoring data. This will open a configuration page with many options.  
+  At the top you can edit the name of the panel  
+  The main option to look for is within the first tab under the graph which appears, called "Query". Here is where you will specify which timeseries you would like to display on the panel.  
+  Simply click on 'select metric' and select a piece of data from one of the pis on the drop down menu.  
+  Each query displays only one statistic for each pi, so naturally you will need to add more queries with the '+ query' button to display the same statistic but for the other pis.  
 
 3. On the right side, under 'visualization' there are options to modify how the data is viewed. The options include using a graph or a gauge. By default, a graph is chosen. The 'display' option underneath 'visualization' shows how each query is shown, and the default is a line.
 
