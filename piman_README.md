@@ -131,11 +131,9 @@ The official implementation is specified as `mapper(switch_address,interface, po
 #### Starting monitoring on rasberry pis
 ``` python
 def monitoring():
-    monitor_thread= Thread(target = monitoring_client.start_from_piman, name= "monitoring")
-    monitor_thread.start()
-    monitor_thread.join()
+    monitoring_client.start_from_piman()
 ```
-`monitoring()` is a function inside the `piman.py` file. This function will start the monitoring client and servers through piman. A thread will start to initalize monitoring and invoke the function `start_from_piman()` from file `monitoring_client.py`
+`monitoring()` is a function inside the `piman.py` file. This function will start the monitoring client through piman.
 
 **Example**
 
