@@ -9,7 +9,7 @@ mkdir build/piman.app
 )
 cp -r logging.conf utility tftp dhcp monitoring tcp *.py build/piman.app
 # copy hosts.csv and monitoring.config into build
-cp -r hosts.csv monitoring/monitoring.config build
+cp -r monitoring/monitoring.config build
 mkdir build/piman.app/install
 mkdir build/logs
 cp piman.yaml build
