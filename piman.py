@@ -31,7 +31,7 @@ from tcp import tcp
 from tftp import tftp
 from utility import power_cycle
 from utility import mac_mapper
-from piman import logger
+from logger import logger
 from parse_config import config
 import ntpserver
 

@@ -27,7 +27,7 @@
 
 import sys
 from pysnmp.hlapi import *
-from piman import logger
+from logger import logger
 
 def find_port(mac_address, switch_address, vlan_number):
     """
