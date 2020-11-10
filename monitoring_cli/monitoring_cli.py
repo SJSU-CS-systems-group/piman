@@ -15,7 +15,7 @@ import click
 import datetime
 
 def check(server, port):
-    """cehck
+    """check
     Check if the connection has been established fine
     """
     try:
