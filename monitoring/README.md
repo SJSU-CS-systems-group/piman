@@ -1,17 +1,17 @@
 # Table of Contents
 
-[Setting Up Monitoring With Grafana](#Setting Up Monitoring With Grafana )  
+[Setting Up Monitoring With Grafana](#Setting-Up-Monitoring-With-Grafana)  
 [Overview](##Overview)  
-[Preparation](#3)  
-[On The VM](#4)  
-[On The Pis](#5)  
-[Setting up the monitoring service on every Pi](#Setting up the monitoring service on every Pi)  
-[Setting MONITORING_LOG_PATH environment variable for monitoring service](#)  
+[Preparation](##Preparation)  
+[On The VM](###On-The-VM)  
+[On The Pis](###on-the-pis)  
+[Setting up the monitoring service on every Pi](##Setting-up-the-monitoring-service-on-every-Pi)  
+[Setting MONITORING_LOG_PATH environment variable for monitoring service](##Setting-MONITORING-LOG_PATH-environment-variable-for-monitoring-service)  
 [Setting up the monitoring client service on the VM](#)  
 [Setting up the grafana.py service](#)  
 [Installing and starting Grafana](#)  
-[Adding the SimpleJSON data source](#)  
-[Making the dashboard](## Making the dashboard)  
+[Adding the SimpleJSON data source](##adding-the-SimpleJSON-data-source)  
+[Making the dashboard](##Making-the-dashboard)  
 
 # Setting Up Monitoring With Grafana
 
