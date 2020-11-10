@@ -198,7 +198,7 @@ class Transaction(object):
             self.mac_mapper(unknown_mac_addr)
 
     def mac_mapper(self, unknown_mac):
-        with open('addr_database.csv', 'r') as f:
+        with open('install/addr_database.csv', 'r') as f:
             reader - csv.reader(f, delimiter=',')
             for row in reader:
                 if unknown_mac.startswith(row[0]):
