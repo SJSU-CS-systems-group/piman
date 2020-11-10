@@ -194,7 +194,7 @@ At this point, all three services should be set up: the monitoring server on the
 
 3. On the right side, under 'visualization' there are options to modify how the data is viewed. The options include using a graph or a gauge. By default, a graph is chosen. The 'display' option underneath 'visualization' shows how each query is shown, and the default is a line.
 
-4.  Directly on top of the graph there is a clock icon with a drop down menu where you can select the time frame that you want the data to be shown in. The icon with the down arrow on the farthest right gives the options of when to refresh the data.
+4. Directly on top of the graph there is a clock icon with a drop down menu where you can select the time frame that you want the data to be shown in. The icon with the down arrow on the farthest right gives the options of when to refresh the data.
 
 5. For more information on how to set up your panel, consult [this link](https://grafana.com/docs/grafana/latest/panels/add-a-panel/). When you are finished with your panel, click save.
 
