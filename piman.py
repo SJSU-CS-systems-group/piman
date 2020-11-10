@@ -108,11 +108,9 @@ def server():
     # when it is run, so after it is closed by a keyboard interrupt, the above
     # lines run closing the rest of the threads. ntp_thread will already be stopped
 
-# start monitoring thread
+# start monitoring client
 def monitoring():
-    monitor_thread= Thread(target = monitoring_client.start_from_piman, name= "monitoring")
-    monitor_thread.start()
-    monitor_thread.join()
+    monitoring_client.start_from_piman()
 
 def restart(switch_address, interface, ports):
     for port in ports:
