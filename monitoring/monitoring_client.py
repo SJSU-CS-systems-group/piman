@@ -1,6 +1,7 @@
 """
 This script runs on the manager pi
 it will poll the slave pis via HTTP GET request to port 3000
+This script also has a method start_from_piman which is used to run client from piman
 """
 import json
 import time
