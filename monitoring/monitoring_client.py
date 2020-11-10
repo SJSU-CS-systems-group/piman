@@ -95,7 +95,7 @@ def _main():
             except requests.exceptions.RequestException:
                 alert("Exception when trying to reach pi@{}".format(ip))
             if r:
-logs                r_json = r.json()
+                r_json = r.json()
                 check_response(r_json, ip)
                 print_to_file(pretty_stats(ip, r_json))
         time.sleep(timeout)
