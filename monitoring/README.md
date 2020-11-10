@@ -2,7 +2,7 @@
 
 ## Overview
 
-The monitoring service on every pi is a server which, when queried, will retrieve system data from the pi. The data currently collected includes: 
+The monitoring service on every pi is a server which, when queried, will retrieve system data from the pi. The data currently collected includes:
 * CPU load
 * memory usage
 * disk usage
@@ -13,11 +13,11 @@ Once retrieved, the server will respond to the query with a json object in the f
 ```
 {
     "time": "Sun Nov  1 08:49:14 2020"
-    "cpu_percent": 0.0, 
-    "memory_percent": 15.6, 
-    "disk_percent": 5.4, 
-    "num_pids": 81, 
-    "temp": 61.224, 
+    "cpu_percent": 0.0,
+    "memory_percent": 15.6,
+    "disk_percent": 5.4,
+    "num_pids": 81,
+    "temp": 61.224,
 }
 ```
 
@@ -89,22 +89,22 @@ Note: You can use another terminal editor, but the commands may be different tha
 - enter ':wq' - this will save changes and exit
 - enter in terminal 'source ~/.bashrc'
 
-Note: this will permanently save your monitor file path as an environment variable and will be used in 
+Note: this will permanently save your monitor file path as an environment variable and will be used in
     grafana.sh and monitoring-piman.sh
 
     In both, it checks if the environment variable is set and if not will exit with exit code of 1.
         If this happens, set the environment var.
-    
+
     The purpose of the environment variable is to set it once and not have to worry about it again.
 
     you can check the output of the environment var you set with:
         - in .sh: "echo ${MONITORING_LOG_PATH}"
         - in terminal: echo $MONITORING_LOG_PATH
         both should be the same result
-    
+
     If you don't 'source ~/.bashrc' after editing the  '~/.bashrc' file, the environment will not be set.
         If you have any doubts, always 'source ~/.bashrc'
-    
+
     There should be a ~/.bashrc file, but if not do:
         - 'cd'
         - 'ls- la | more'
@@ -125,8 +125,8 @@ Setting up the client service requires editing the monitoring.config file to you
 - cpu_threshold: the highest percent of CPU which should be in use by the pi.
 - url: under the `[slack]` section, this should be a Slack webhook URL. under the `[discord]` section, this should be a Discord webhook.
 
-1. Obtain a slack or discord webhook URL. For more information on how to set up webhooks, follow these instructions: 
-- [slack](https://api.slack.com/messaging/webhooks#getting_started) 
+1. Obtain a slack or discord webhook URL. For more information on how to set up webhooks, follow these instructions:
+- [slack](https://api.slack.com/messaging/webhooks#getting_started)
 - [discord](https://support.discord.com/hc/en-us/articles/228383668-Intro-to-Webhooks)
 
 2. Paste this webhook URL into its respective section in monitoring.config.
@@ -157,7 +157,7 @@ At this point, all three services should be set up: the monitoring server on the
 
 1. Follow [these instructions]() to install and run Grafana on the VM. The instructions are for Debian/Ubuntu, since this is the OS which the VM runs.
 
-2. To access the Grafana dashboard from your local computer, make sure you are connected to the VPN for the switch (you should already have openvpn set up by this point). Open a browser and navigate to your switch address: for example, `172.31.x.254:3000`, where x is your group number. The port is 3000 since this is Grafana's default server port. 
+2. To access the Grafana dashboard from your local computer, make sure you are connected to the VPN for the switch (you should already have openvpn set up by this point). Open a browser and navigate to your switch address: for example, `172.31.x.254:3000`, where x is your group number. The port is 3000 since this is Grafana's default server port.
 
 3. Log in to the Grafana dashboard with username `admin` and password `admin`. You should now be able to view and modify your Grafana dashboard.
 
@@ -169,11 +169,17 @@ At this point, all three services should be set up: the monitoring server on the
 
 ## Making the dashboard
 
-1. Create a new dashboard by clicking on the "plus" symbol in the menu to the left, and in the dropdown which appears, "Dashboard".
+1. Create a new dashboard by clicking on the "plus" symbol in the menu to the left, and in the dropdown which appears, "Dashboard". 
 
-2. In the new dashboard, click "Add new panel". This will open a configuration page with many options. The main option to look for is within the first tab under the graph which appears, called "Query". Here is where you will specify which timeserie you would like to display on the panel.
+2. In the new dashboard, click "Add new panel". A panel will allow you to organize the monitoring data. This will open a configuration page with many options. At the top you can edit the name of the panel. The main option to look for is within the first tab under the graph which appears, called "Query". Here is where you will specify which timeserie you would like to display on the panel. You simply click on 'select metric' and select a piece of data from one of the pis on the drop down menu. Each query displays only one statistic for each pi, so naturally you will need to add more queries with the '+ query' button to display the same statistic but for the other pis.
 
-3. For more information on how to set up your panel, consult [this link](https://grafana.com/docs/grafana/latest/panels/add-a-panel/).
- 
+3. On the right side, under 'visualization' there are options to modify how the data is viewed. The options include using a graph or a gauge. By default, a graph is chosen. The 'display' option underneath 'visualization' shows how each query is shown, and the default is a line.
+
+4.  Directly on top of the graph there is a clock icon with a drop down menu where you can select the time frame that you want the data to be shown in. The icon with the down arrow on the farthest right gives the options of when to refresh the data.
+
+5. For more information on how to set up your panel, consult [this link](https://grafana.com/docs/grafana/latest/panels/add-a-panel/). When you are finished with your panel, click save.
+
+6. You can add more panels to display other combinations of features that you would like to monitor. You can do this by clicking on the icon with the bar graph and plus symbol inside of it.
+
 ## Future Improvements
 - Add a table of contents and links to this README.
