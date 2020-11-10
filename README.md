@@ -139,13 +139,13 @@ Functionalities include:
 
 * Running the piman server in the background
 ```bash
-sudo python3 piman.py server &
+sudo python3 piman.pyz server
 ```
-* Restarting a raspberry pi
+* Restarting a raspberry pi (restart multiple by listing more port numbers with spaces in-between) 
 ```bash
-sudo python3 piman.py restart <port number of a pi>
+sudo python3 piman.pyz restart <port number of a pi>
 ```
-* Reinstalling a raspberry pi
+* Reinstalling a raspberry pi (reinstall multiple by listing more port numbers with spaces in-between)
 ```bash
 sudo python3 piman.py reinstall <port number of a pi>
 ```
@@ -399,7 +399,11 @@ Navigate to `install/initram/README.md` to read about hello_protocol.sh.
 ---
 ### What is make_zipapp.sh?
 
-make_zipapp.sh is a script that will compress the entire repository into a /build directory.
+make_zipapp.sh is a script that will compress the entire repository into a /build directory. It should be run every time code changes have been made.
+WARNING: do not run with sudo privileges.
+'''bash
+./make_zipapp.sh
+'''
 
 ### Why make_zipapp.sh?
 

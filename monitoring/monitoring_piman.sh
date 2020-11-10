@@ -8,5 +8,15 @@ echo 1 > /proc/sys/net/ipv4/ip_forward
 
 echo "----------------------PIMAN MONITOIRNG START---------------------"
 # run the pi client keep asking monitoring data from each of the Pi
+
+
+# checks for monitroing file path
+# if not set, exits
+if [[ -z "${MONITORING_LOG_PATH}" ]]; then
+    echo "ERROR: MONITORING_LOG_PATH not set globally. Please reference the README.md and set the environ. var"
+    echo "exiting..."
+    exit 1
+fi
+
 cd /usr/local/piman/monitoring
-python3 monitoring-client.py monitoring.config logs/monitor.log /usr/local/piman/hosts.csv
+python3 monitoring-client.py monitoring.config ${MONITORING_LOG_PATH} /usr/local/piman/hosts.csv

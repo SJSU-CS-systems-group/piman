@@ -18,6 +18,42 @@ sudo python3 piman.py restart <port number of a pi>
 sudo python3 piman.py reinstall <port number of a pi>
 ```
 
+#### Running the server using systemd
+In order to continually run the piman server in the background even when the VM is restarted, we will use systemd and service files. First make sure the files piman.service and piman.sh are both under the same directory in /usr/local/piman. Check to see that piman.sh contains the following:
+```bash
+#!/bin/bash
+python3 -u build/piman.pyz server
+```
+You should also check the piman.service file to make sure the working directory is /usr/local/piman and that ExecStart is pointing to the correct location of piman.sh It should look like the code below:
+```bash
+[Unit]
+Description=Pi Manager
+
+[Service]
+WorkingDirectory=/usr/local/piman
+ExecStart=/usr/local/piman/piman.sh
+Restart=always
+
+[Install]
+WantedBy=default.target
+```
+Create a symbolic link from the service file to /etc/systemd/system using the command 
+```bash
+ln -s /usr/local/piman/piman.service /etc/systemd/system
+``` 
+You can check to see if the symbolic link is there by running 
+```bash
+ls -l /etc/systemd/system 
+``` 
+and seeing if piman.service -> /usr/local/piman/piman.service is there.
+
+Finally, start the piman service, enable it so that it runs on boot and check the status to ensure it is running.
+```bash
+sudo systemctl start piman
+sudo systemctl enable piman
+sudo systemctl status piman
+```
+
 # Why piman.py?
 
 `piman.py` exists to be the process that enables network booting and communication with raspberry pi's over the virtual network.  

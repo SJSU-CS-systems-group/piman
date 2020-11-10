@@ -2,8 +2,8 @@
 Description=Pi Manager
 
 [Service]
-WorkingDirectory=/home/ashley/piman
-ExecStart=/home/ashley/piman/piman.sh
+WorkingDirectory=/usr/local/piman
+ExecStart=/usr/local/piman/piman.sh
 Restart=always
 
 [Install]

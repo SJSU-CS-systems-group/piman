@@ -1,21 +1,17 @@
 # What is tcp.py?
-`tcp.py` is a very simple threaded implementation of the TCP protocol.  
-Rather than a full implementation of traditional TCP protocol, `tcp.py` will try to follow the protocol by...  
+`tcp.py` is a very simple threaded program running on the TCP protocol used to transfer a single file, `rootfs.tgz`.
 
+`tcp.py` does the following:
 * establishing a connection 1st and foremost
 * processing requests after a connection has been established
+* creates a sperate connection to transfer `rootfs.tgz`
 
-But it will be different from traditional TCP protocol in that...  
-
-* ports will be used to establish a connection instead of IP addresses
-* there is no TCP handshake implemented
-* there is no SYN request at the beginning
-* there is no ACK to be handled
+This protocol is purposefully kept simple due to simple nature of its purpose. After each exchange of messages between the Pi and Piman, Piman logs the event that just occurred. This protocol establishes a tcp connection to port 3333 of the piman as a control connection, and another at 4444 which is used as a file transfer connection. Commands and responses are sent through the control connection, while the file transfer connection is used to transfer `rootfs.tgz`.
+But it will be different from traditional protocols in that ports will be used to establish a connection instead of IP addresses. Since this is between Ben's vm and the Pis, we already know the IP of the server (piman).
 
 # Why is tcp.py designed like this?
-After reading the 1st header, you might think to yourself: "No handshake? No connection using IP addresses? What kind of TCP protocol is this????"  
-And that is a really good question that won't be answered in this README. However this README can tell that `tcp.py` is designed to like this because its purpose is just to transfer the `/../install/boot/rootfs.tgz` file to the pi.  
-But why use `tcp.py` to do this when `/../tftp/tftp.py` already exists to transfer boot files? This is due to `rootfs.tgz` being so large (~500 MB).  
+`tcp.py` is designed to like this because its purpose is just to transfer the `install/boot/rootfs.tgz` file to the pi.  
+But why use `tcp.py` to do this when `tftp/tftp.py` already exists to transfer boot files? This is due to `rootfs.tgz` being so large (~500 MB).  
 Because of the size, there must be a dedicated connection with the pi and our `piman.py` server.  
 It is also important to note that because we are transfering `root.tgz` from ben's VM instead of from a location on the internet, there is no need to use IP addresses.     
 

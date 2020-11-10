@@ -4,10 +4,8 @@ from datetime import datetime
 from calendar import timegm
 from bottle import (Bottle, HTTPResponse, run, request, response,
                     json_dumps as dumps)
-
 app = Bottle()
-
-log_path = "logs/monitor.log"
+log_path = ''
 DATA = {}
 
 
