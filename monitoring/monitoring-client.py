@@ -20,16 +20,16 @@ def alert(data):
         info["embeds"].append({'description': data})
         try:
             r = requests.post(url, data=json.dumps(info), headers={'Content-type': 'application/json'})
-        except Exception as e:
+            print_to_file("Alerting (discord) - {}: {}\n".format(r.status_code, r.reason))
+         except Exception as e:
             print_to_file("Unable to send alert - {}".format(e))
-        print_to_file("Alerting (discord) - {}: {}\n".format(r.status_code, r.reason))
     if monitor_config['DEFAULT']['slack']:
         url = monitor_config['DEFAULT']['slack']
         try:
             r = requests.post(url, data=json.dumps({'text':'{}'.format(data)}), headers={'Content-type': 'application/json'})
+            print_to_file("Alerting (slack) - {}: {}\n".format(r.status_code, r.reason))
         except Exception as e:
             print_to_file("Unable to send alert - {}".format(e))
-        print_to_file("Alerting (slack) - {}: {}\n".format(r.status_code, r.reason))
 
 
 def pretty_stats(ip, event):
