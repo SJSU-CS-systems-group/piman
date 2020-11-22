@@ -18,67 +18,69 @@ def parse():
             contents.remove('')
         for pi_info in contents:
             pi = pi_info.split("\n")
-            pi_ip = pi[0].split('@')[1]
-            ts = datetime.strptime(pi[0].split(' -')[0], '%a %b %d %H:%M:%S %Y')
-            time = ts.timestamp() * 1000
-            try:
-                #The Arrays use negative indicies so that that, if the pi goes above threshold or has to display an error message,
-                #Grafana will still be able to receive the numbers and update the dashboards.
-                cpu_load = float(pi[-5].replace("CPU load: ", "").replace(" ", ""))
-                ram = float(pi[-4].replace("RAM usage: ", "").replace(" ", ""))
-                disk_usage = float(pi[-3].replace("Disk usage: ", "").replace(" ", ""))
-                pids = int(pi[-2].replace("# of PIDs: ", "").replace(" ", ""))
-                temp = float(pi[-1].replace("Temperature: ", "").replace(" F", "").replace(" ", ""))
+            if("Alert" not in str(pi)):
+                print(str(pi))
+                pi_ip = pi[0].split('@')[1]
+                ts = datetime.strptime(pi[0].split(' -')[0], '%a %b %d %H:%M:%S %Y')
+                time = ts.timestamp() * 1000
+                try:
+                    #The Arrays use negative indicies so that that, if the pi goes above threshold or has to display an error message,
+                    #Grafana will still be able to receive the numbers and update the dashboards.
+                    cpu_load = float(pi[-5].replace("CPU load: ", "").replace(" ", ""))
+                    ram = float(pi[-4].replace("RAM usage: ", "").replace(" ", ""))
+                    disk_usage = float(pi[-3].replace("Disk usage: ", "").replace(" ", ""))
+                    pids = int(pi[-2].replace("# of PIDs: ", "").replace(" ", ""))
+                    temp = float(pi[-1].replace("Temperature: ", "").replace(" F", "").replace(" ", ""))
 
-                if pi_ip + " CPU" not in DATA:
-                    DATA[pi_ip + " CPU"] = {time: cpu_load}
-                else:
-                    DATA[pi_ip + " CPU"][time] = cpu_load
+                    if pi_ip + " CPU" not in DATA:
+                        DATA[pi_ip + " CPU"] = {time: cpu_load}
+                    else:
+                        DATA[pi_ip + " CPU"][time] = cpu_load
 
-                if pi_ip + " Ram" not in DATA:
-                    DATA[pi_ip + " Ram"] = {time: ram}
-                else:
-                    DATA[pi_ip + " Ram"][time] = ram
+                    if pi_ip + " Ram" not in DATA:
+                        DATA[pi_ip + " Ram"] = {time: ram}
+                    else:
+                        DATA[pi_ip + " Ram"][time] = ram
 
-                if pi_ip + " Disk Usage" not in DATA:
-                    DATA[pi_ip + " Disk Usage"] = {time: disk_usage}
-                else:
-                    DATA[pi_ip + " Disk Usage"][time] = disk_usage
+                    if pi_ip + " Disk Usage" not in DATA:
+                        DATA[pi_ip + " Disk Usage"] = {time: disk_usage}
+                    else:
+                        DATA[pi_ip + " Disk Usage"][time] = disk_usage
 
-                if pi_ip + " PIDs" not in DATA:
-                    DATA[pi_ip + " PIDs"] = {time: pids}
-                else:
-                    DATA[pi_ip + " PIDs"][time] = pids
+                    if pi_ip + " PIDs" not in DATA:
+                        DATA[pi_ip + " PIDs"] = {time: pids}
+                    else:
+                        DATA[pi_ip + " PIDs"][time] = pids
 
-                if pi_ip + " Temperature" not in DATA:
-                    DATA[pi_ip + " Temperature"] = {time: temp}
-                else:
-                    DATA[pi_ip + " Temperature"][time] = temp
-            except:
-                if pi_ip + " CPU" not in DATA:
-                    DATA[pi_ip + " CPU"] = {time: 0}
-                else:
-                    DATA[pi_ip + " CPU"][time] = {time: 0}
+                    if pi_ip + " Temperature" not in DATA:
+                        DATA[pi_ip + " Temperature"] = {time: temp}
+                    else:
+                        DATA[pi_ip + " Temperature"][time] = temp
+                except:
+                    if pi_ip + " CPU" not in DATA:
+                        DATA[pi_ip + " CPU"] = {time: 0}
+                    else:
+                        DATA[pi_ip + " CPU"][time] = {time: 0}
 
-                if pi_ip + " Ram" not in DATA:
-                    DATA[pi_ip + " Ram"] = {time: 0}
-                else:
-                    DATA[pi_ip + " Ram"][time] = {time: 0}
+                    if pi_ip + " Ram" not in DATA:
+                        DATA[pi_ip + " Ram"] = {time: 0}
+                    else:
+                        DATA[pi_ip + " Ram"][time] = {time: 0}
 
-                if pi_ip + " Disk Usage" not in DATA:
-                    DATA[pi_ip + " Disk Usage"] = {time: 0}
-                else:
-                    DATA[pi_ip + " Disk Usage"][time] = {time: 0}
+                    if pi_ip + " Disk Usage" not in DATA:
+                        DATA[pi_ip + " Disk Usage"] = {time: 0}
+                    else:
+                        DATA[pi_ip + " Disk Usage"][time] = {time: 0}
 
-                if pi_ip + " PIDs" not in DATA:
-                    DATA[pi_ip + " PIDs"] = {time: 0}
-                else:
-                    DATA[pi_ip + " PIDs"][time] = {time: 0}
+                    if pi_ip + " PIDs" not in DATA:
+                        DATA[pi_ip + " PIDs"] = {time: 0}
+                    else:
+                        DATA[pi_ip + " PIDs"][time] = {time: 0}
 
-                if pi_ip + " Temperature" not in DATA:
-                    DATA[pi_ip + " Temperature"] = {time: 0}
-                else:
-                    DATA[pi_ip + " Temperature"][time] = {time: 0}
+                    if pi_ip + " Temperature" not in DATA:
+                        DATA[pi_ip + " Temperature"] = {time: 0}
+                    else:
+                        DATA[pi_ip + " Temperature"][time] = {time: 0}
 
         return True
 
@@ -160,3 +162,4 @@ if __name__ == '__main__':
 
     if parse():
         run(app=app, host='', port=8081)
+
