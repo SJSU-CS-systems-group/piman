@@ -27,7 +27,7 @@ def alert(data):
         url = monitor_config['DEFAULT']['slack']
         try:
             r = requests.post(url, data=json.dumps({'text':'{}'.format(data)}), headers={'Content-type': 'application/json'})
-            print_to_file("Alerting (slack) - {}: {}\n".format(r.status_code, r.reason))
+            print_to_file("Alerting (slack) - {}: {}\n".format(r.status_code, r.reason)
         except Exception as e:
             print_to_file("Unable to send alert - {}".format(e))
 
