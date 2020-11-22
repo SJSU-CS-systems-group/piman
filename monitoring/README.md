@@ -74,13 +74,17 @@ sudo pip3 install requests
 
 
 ### On the Pis
-1. Run the following script to initialize the pis, copy all needed files to them, and install and run the monitoring service on them:
+1. Run the following command to install needed dependencies for this section:
+```
+sudo apt-get install sshpass
+```
+2. Run the following script to initialize the pis, copy all needed files to them, and install and run the monitoring service on them:
 ```
 cd /usr/local/piman/monitoring
 sudo ./init_pis.sh pi piman /usr/local/piman/hosts.csv /usr/local/piman/monitoring
 ```
 
-2. Repeat this process for all other pis.
+3. Repeat this process for all other pis.
 
 ## Setting up the monitoring service on every Pi
 
