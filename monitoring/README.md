@@ -81,7 +81,7 @@ sudo pip3 install requests
 
 
 ### Run On the VMs to deploy monitoring on Pis
-1. Run commands below manually to set up ip tables for pis to access internet. These commands are included in monitoring_piman.sh because this configuration will be gone after rebooting your VM.
+1. Run commands below manually to set up ip tables for pis to access internet. These commands are included in monitoring_piman.sh because this configuration will be gone after rebooting your VM. In the following commands, ens3 is the interface that has access to the internet, and ens4 is the interface to the pi cluster. We are routing the packets from the pi cluster to the internet, and vice versa.
 ```bash
 sudo echo 1 > /proc/sys/net/ipv4/ip_forward
 sudo iptables -t nat -A POSTROUTING -o ens3 -j MASQUERADE
