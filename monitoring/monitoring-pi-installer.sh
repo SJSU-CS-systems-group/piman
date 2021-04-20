@@ -2,8 +2,8 @@
 sudo apt-get update
 sudo apt -y install python3-pip
 
-pip3 install flask-restful
-pip3 install psutil
+sudo pip3 install flask-restful
+sudo pip3 install psutil
 
 sudo cp monitoring-pi.service /etc/systemd/system
 sudo systemctl enable monitoring-pi.service
