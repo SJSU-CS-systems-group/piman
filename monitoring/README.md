@@ -1,17 +1,17 @@
 # Table of Contents
 
-[Setting Up Monitoring With Grafana](#Setting-Up-Monitoring-With-Grafana)  
-[Overview](##Overview)  
-[Preparation](##Preparation)  
-[On The VM](###On-The-VM)  
-[On the Pis](###On-the-Pis)  
-[Setting up the monitoring service on every Pi](##Setting-up-the-monitoring-service-on-every-Pi)  
-[Setting MONITORING_LOG_PATH environment variable for monitoring service](##Setting-MONITORING-LOG_PATH-environment-variable-for-monitoring-service)  
-[Setting up the monitoring client service on the VM](##Setting-up-the-monitoring-client-service-on-the-VM)  
-[Setting up the grafana.py service](##Setting-up-the-grafana.py-service)  
-[Installing and starting Grafana](##Installing-and-starting-Grafana)  
-[Adding the SimpleJSON data source](##Adding-the-SimpleJSON-data-source)  
-[Making the dashboard](##Making-the-dashboard)  
+[Setting Up Monitoring With Grafana](#Setting-Up-Monitoring-With-Grafana)
+[Overview](##Overview)
+[Preparation](##Preparation)
+[On The VM](###On-The-VM)
+[On the Pis](###On-the-Pis)
+[Setting up the monitoring service on every Pi](##Setting-up-the-monitoring-service-on-every-Pi)
+[Setting MONITORING_LOG_PATH environment variable for monitoring service](##Setting-MONITORING-LOG_PATH-environment-variable-for-monitoring-service)
+[Setting up the monitoring client service on the VM](##Setting-up-the-monitoring-client-service-on-the-VM)
+[Setting up the grafana.py service](##Setting-up-the-grafana.py-service)
+[Installing and starting Grafana](##Installing-and-starting-Grafana)
+[Adding the SimpleJSON data source](##Adding-the-SimpleJSON-data-source)
+[Making the dashboard](##Making-the-dashboard)
 
 # Setting Up Monitoring With Grafana
 
@@ -46,9 +46,16 @@ The last component to monitoring is installing Grafana itself. Grafana must be i
 
 The following sections will explain the steps to set up monitoring in detail.
 
+## Add more metrics
+You can add more metrics by fetching more fields using [psutil](https://psutil.readthedocs.io/en/latest/) in monitoring-server.py.
+
 ## Preparation
 
 The first step is to update all the pis' package repositories, install all dependencies, make all necessary directories, and copy files to the right locations.
+You will need to change all the paths in service files to your desired working directories. And if you encounter failing running any service. You can try the command below and read error messages from the journal logs.
+```bash
+journalctl -xe
+```
 
 ### On the VM
 
@@ -73,14 +80,21 @@ sudo pip3 install requests
 ```
 
 
-### On the Pis
-1. Run the following script to initialize the pis, copy all needed files to them, and install and run the monitoring service on them:
+### Run On the VMs to deploy monitoring on Pis
+1. Run commands below manually to set up ip tables for pis to access internet. These commands are included in monitoring_piman.sh because this configuration will be gone after rebooting your VM. In the following commands, ens3 is the interface that has access to the internet, and ens4 is the interface to the pi cluster. We are routing the packets from the pi cluster to the internet, and vice versa.
+```bash
+sudo echo 1 > /proc/sys/net/ipv4/ip_forward
+sudo iptables -t nat -A POSTROUTING -o ens3 -j MASQUERADE
+sudo iptables -A FORWARD -i ens3 -o ens4 -m state --state RELATED,ESTABL$/sbin/iptables -A FORWARD -i ens4 -o ens3 -j ACCEPT
+```
+
+2. Run the following script to initialize the pis, copy all needed files to them, and install and run the monitoring service on them:
 ```
 cd /usr/local/piman/monitoring
 sudo ./init_pis.sh pi piman /usr/local/piman/hosts.csv /usr/local/piman/monitoring
 ```
 
-2. Repeat this process for all other pis.
+3. Repeat this process for all other pis.
 
 ## Setting up the monitoring service on every Pi
 
@@ -88,8 +102,8 @@ sudo ./init_pis.sh pi piman /usr/local/piman/hosts.csv /usr/local/piman/monitori
 
 ```
 sudo systemctl daemon-reload
-sudo systemctl start monitoring
-sudo systemctl status monitoring
+sudo systemctl start monitoring-pi
+sudo systemctl status monitoring-pi
 ```
 
 ## Setting MONITORING_LOG_PATH environment variable for monitoring service
@@ -99,13 +113,21 @@ Note: You can use another terminal editor, but the commands may be different tha
 - vim ~/.bashrc
 
 - press 'i' key
-- at the top, or wherever you prefer add 'export MONITORING_LOG_PATH="relative/path/to/monitor/logfile"
+- at the top, or wherever you prefer add 'export MONITORING_LOG_PATH="relative/path/to/monitor/logfile"' and 'systemctl set-environment MONITORING_LOG_PATH="relative/path/to/monitor/logfile"'
 - press 'esc' key
 - enter ':wq' - this will save changes and exit
 - enter in terminal 'source ~/.bashrc'
 
 Note: this will permanently save your monitor file path as an environment variable and will be used in
-    grafana.sh and monitoring-piman.sh
+    grafana.sh and monitoring-piman.sh.
+
+Due to the fact that our services are run using root user, it is likely that you need to set the enviroment variable in root's bashrc. If that is the case, you can switch to root user first.
+```bash
+sudo su
+echo 'export MONITORING_LOG_PATH="relative/path/to/monitor/logfile"' >> ~/.bashrc
+echo 'systemctl set-environment MONITORING_LOG_PATH="relative/path/to/monitor/logfile"' >> ~/.bashrc
+sudo [your-default-user]
+```
 
     In both, it checks if the environment variable is set and if not will exit with exit code of 1.
         If this happens, set the environment var.
@@ -170,27 +192,35 @@ At this point, all three services should be set up: the monitoring server on the
 
 ## Installing and starting Grafana
 
-1. Follow [these instructions]() to install and run Grafana on the VM. The instructions are for Debian/Ubuntu, since this is the OS which the VM runs.
+1. Install and run Grafana on the VM.
+```bash
+./grafana-install.sh
+```
 
 2. To access the Grafana dashboard from your local computer, make sure you are connected to the VPN for the switch (you should already have openvpn set up by this point). Open a browser and navigate to the VM address that piman is running on: for example, `172.31.x.254:3000`, where x is your group number. The port is 3000 since this is Grafana's default server port.
 
 3. Log in to the Grafana dashboard with username `admin` and password `admin`. You should now be able to view and modify your Grafana dashboard.
 
 ## Adding the SimpleJSON data source
+1. Install SimpleJson
+```bash
+./simplejson-install.sh
+```
 
-1. Once you have logged in, hover over the Settings tab on the left, and click on "Data Sources". Click on "Add Data Source" to the right on the page which appears. Search for SimpleJSON and hit "Select". This will open its configuration page.
 
-2. Find the HTTP section, and the first option should be URL. Set this to `127.0.0.1:8081` (this is the link to your grafana.py server.) Then, click Save and Test. If everything passed through normally, your grafana.py server should have received a request for the root index '/' and returned a 200 OK response.
+2. Once you have logged in, hover over the Settings tab on the left, and click on "Data Sources". Click on "Add Data Source" to the right on the page which appears. Search for SimpleJSON and hit "Select". This will open its configuration page.
+
+3. Find the HTTP section, and the first option should be URL. Set this to `127.0.0.1:8081` (this is the link to your grafana.py server.) Then, click Save and Test. If everything passed through normally, your grafana.py server should have received a request for the root index '/' and returned a 200 OK response.
 
 ## Making the dashboard
 
 1. Create a new dashboard by clicking on the "plus" symbol in the menu to the left, and in the dropdown which appears, "Dashboard".
 
-2. In the new dashboard, click "Add new panel". A panel will allow you to organize the monitoring data. This will open a configuration page with many options.  
-  At the top you can edit the name of the panel.  
-  The main option to look for is within the first tab under the graph which appears, called "Query". Here is where you will specify which timeseries you would like to display on the panel.  
-  Simply click on 'select metric' and select a piece of data from one of the pis on the drop down menu.  
-  Each query displays only one statistic for each pi, so naturally you will need to add more queries with the '+ query' button to display the same statistic but for the other pis.  
+2. In the new dashboard, click "Add new panel". A panel will allow you to organize the monitoring data. This will open a configuration page with many options.
+  At the top you can edit the name of the panel.
+  The main option to look for is within the first tab under the graph which appears, called "Query". Here is where you will specify which timeseries you would like to display on the panel.
+  Simply click on 'select metric' and select a piece of data from one of the pis on the drop down menu.
+  Each query displays only one statistic for each pi, so naturally you will need to add more queries with the '+ query' button to display the same statistic but for the other pis.
 
 3. On the right side, under 'visualization' there are options to modify how the data is viewed. The options include using a graph or a gauge. By default, a graph is chosen. The 'display' option underneath 'visualization' shows how each query is shown, and the default is a line.
 
