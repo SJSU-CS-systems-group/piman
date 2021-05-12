@@ -94,6 +94,7 @@ Resolve non-cs158b TLD queries
 dig @127.0.0.1 yahoo.com
 dig @127.0.0.1 -x 157.240.22.35
 dig @127.0.0.1 SRV _sip._udp.sip.voice.google.com
+dig @127.0.0.1 SRV srv _xmpp-client._tcp.jabberzac.org
 ```
 
 ## Suggestion for extracting DNS format
@@ -102,4 +103,5 @@ Use **WireShark** and set the filter on *dns*. The following commands are also h
 dig @8.8.8.8 yahoo.com
 dig @8.8.8.8 -x 157.240.22.35
 dig @8.8.8.8 SRV _sip._udp.sip.voice.google.com
+dig @8.8.8.8 SRV srv _xmpp-client._tcp.jabberzac.org
 ```
