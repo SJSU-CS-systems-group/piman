@@ -134,7 +134,7 @@ class DNSServer:
         self.server_socket.connect(from_client)
         query = self._get_query_section(pack)
         answers, num_answers = get_anwsers()
-        pre_query = serialize.Serialize({
+        header = serialize.Serialize({
             'ID': ('2B', pack.get_field('ID').value),
             'Response': (1, 1),
             'Opcode': 4,
@@ -151,13 +151,13 @@ class DNSServer:
             'Authority RRs': '2B',
             'Additional RRs': '2B'
         }).packetize()
-        res = pre_query + query + answers
+        res = header + query + answers
         self.server_socket.send(res)
 
     def resolve_ip(self, from_client, pack):
         self.server_socket.connect(from_client)
 
-        pre_query = serialize.Serialize({
+        header = serialize.Serialize({
             'ID': ('2B', pack.get_field('ID').value),
             'Response': (1, 1),
             'Opcode': 4,
@@ -177,6 +177,7 @@ class DNSServer:
 
         query = self._get_query_section(pack)
 
+        # prepare anwser section
         pi_port = pack.get_field('Name').value.split('.')[0]
         host = 'pi{}.{}'.format(pi_port, self.dns_domain)
         domain_name = self._get_host_bytes(host)
@@ -190,7 +191,7 @@ class DNSServer:
             'Data length': ('2B', data_length)
         }).packetize()
         answer += domain_name
-        res = pre_query + query + answer
+        res = header + query + answer
 
         self.server_socket.send(res)
 
@@ -207,7 +208,7 @@ class DNSServer:
 
         self.server_socket.connect(from_client)
 
-        pre_query = serialize.Serialize({
+        header = serialize.Serialize({
             'ID': ('2B', pack.get_field('ID').value),
             'Response': (1, 1),
             'Opcode': 4,
@@ -227,6 +228,7 @@ class DNSServer:
 
         query = self._get_query_section(pack)
 
+        # prepare anwser section
         ip = _get_mapped_ip(pack.get_field('Name').value)
         ip_bytes = bytes(map(int, ip.split('.')))
         data_length = len(ip_bytes)
@@ -240,7 +242,7 @@ class DNSServer:
         }).packetize()
         answer += ip_bytes
 
-        res = pre_query + query + answer
+        res = header + query + answer
 
         self.server_socket.send(res)
 
