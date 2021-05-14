@@ -99,8 +99,10 @@ class TCPServer:
         This function serves the control socket's coming requests.
         """
         reinstall_file = list()
-        with open('reinstall.txt') as fp:
+        with open('reinstall.txt', "r+") as fp:
             reinstall_file = fp.read()
+            fp.seek(0)
+            fp.truncate(0)
         try:
             logger.info("serving client from: {}".format(client_addr))
             fd = client_socket.makefile()
