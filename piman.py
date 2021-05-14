@@ -76,6 +76,7 @@ subnet_mask = config['subnet_mask']
 mac_ip_file = "hosts.csv"
 lease_time = 600
 interface = config['interface']
+private_number = config['private_number']
 
 
 def server():
@@ -114,8 +115,9 @@ def restart(switch_address, interface, ports):
 
 def reinstall(switch_address, interface, port):
     with open("reinstall.txt", "w") as f:
-        network_addr = ip[:7] + str(interface) + "." + str(port)
-        f.write(network_addr)
+        switch_ip_parts = switch_address.split(".")
+        pi_addr = ".".join([switch_ip_parts[0], switch_ip_parts[1], str(private_number), str(port)])
+        f.write(pi_addr)
     power_cycle.power_cycle(switch_address, interface, port)
     
 def mapper(switch_address,interface, port, file):
