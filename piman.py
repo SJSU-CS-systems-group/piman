@@ -74,6 +74,7 @@ tcp_port = 3333
 ip = config['server_address']
 subnet_mask = config['subnet_mask']
 mac_ip_file = "hosts.csv"
+reinstall_file = "reinstall.txt"
 lease_time = 600
 interface = config['interface']
 private_number = config['private_number']
@@ -114,7 +115,7 @@ def restart(switch_address, interface, ports):
 
 
 def reinstall(switch_address, interface, port):
-    with open("reinstall.txt", "w") as f:
+    with open(reinstall_file, "w") as f:
         switch_ip_parts = switch_address.split(".")
         pi_addr = ".".join([switch_ip_parts[0], switch_ip_parts[1], str(private_number), str(port)])
         f.write(pi_addr)
