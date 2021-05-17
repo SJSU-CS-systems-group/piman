@@ -6,8 +6,8 @@
     - [A RR](#a-rr)
     - [PTR RR](#ptr-rr)
     - [SRV RR](#srv-rr)
-    - [What about multiple answers?](#what-about-multiple-answers?)
-- [Why we need DNS server and SRV records in piman?](#why-we-need-dns-server-and-srv-records-in-piman?)
+    - [What about multiple answers?](#what-about-multiple-answers)
+- [Why we need DNS server and SRV records in piman?](#why-we-need-dns-server-and-srv-records-in-piman)
 - [How to test](#how-to-test)
 - [Suggestion for extracting DNS format](#suggestion-for-extracting-dns-format)
 ## DNS Resource Record
@@ -67,26 +67,29 @@ Name 1 | Type 1 | Class 1| TTL 1| Data length 1| Data 1| Name 2 | Type 2 | Class
 ## Why we need DNS server and SRV records in piman?
 In order to use Prometheus on piman and export the metric data from all the pis, we need to specify where to gather data, and in this case, it will be all the pi's IP addresses and port 9100 if we use node_exporter.
 
-However, there will be **prometheus.yml** that specifes where to gather data and **hosts.csv** that contains all the pis' IPs, and if we need to add one more pi, we will need to update two files. Hence, to keep it simple and easy to maintain, we use SRV records to indicate the services' location, which means that we only need to specify target as **metrics.city.cs158b** in **prometheus.yml**, and the DNS server (piman) will resolve all the pi's addresses and ports for us (node_exporter).
+However, there will be **prometheus.yml** that specifes where to gather data and **hosts.csv** that contains all the pis' IPs, and if we need to add one more pi, we will need to update two files. Hence, to keep it simple and easy to maintain, we use SRV records to indicate the services' location, which means that we only need to specify target as **metrics.city.cs158b** in **prometheus.yml**, and the DNS server (piman) will resolve all the pi's addresses and ports for us (node_exporter). To be specific, **metrics.city.cs158b** is the general name we use for SRV records, and you might need to change it to the one you use.
 
 ## How to test
 Resolve pi's host name.
 - pi-port: pi's port number, ex: 1, 2, 11, or 12
-- city-name: your city name, ex: eureka
+- city: your city name, ex: eureka
 ```bash
-dig @127.0.0.1 pi[pi-port].[city-name].cs158b
+dig @127.0.0.1 pi[pi-port].city.cs158b
+# ex: dig @127.0.0.1 pi1.eureka.cs158b
 ```
 
 Resolve pi's IP
 - pi-IP: pi's IP, ex: 172.16.5.1
 ```bash
 dig @127.0.0.1 -x [pi-IP]
+# ex: dig @127.0.0.1 -x 172.16.5.1
 ```
 
 Resolve SRV records for all pis
-- city-name: your city name, ex: eureka
+- city: your city name, ex: eureka
 ```bash
-dig @127.0.0.1 SRV metrics.[city-name].cs158b
+dig @127.0.0.1 SRV metrics.city.cs158b
+# ex: dig @127.0.0.1 SRV metrics.eureka.cs158b
 ```
 
 Resolve non-cs158b TLD queries
