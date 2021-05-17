@@ -115,7 +115,7 @@ def restart(switch_address, interface, ports):
 
 
 def reinstall(switch_address, interface, port):
-    with open(reinstall_file, "w") as f:
+    with open(reinstall_file, "w+") as f:
         switch_ip_parts = switch_address.split(".")
         pi_addr = ".".join([switch_ip_parts[0], switch_ip_parts[1], str(private_number), str(port)])
         f.write(pi_addr)
