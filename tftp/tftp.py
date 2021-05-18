@@ -161,9 +161,6 @@ class TFTPServer:
 
                         client_dedicated_sock.sendto(s.packetize(), addr)
 
-                    # set the opcode for the packet we are sending
-                    # transfer_opcode = pack("!H", TFTPServer.DATA_OPCODE)
-
                     # read up to the appropriate 512 bytes of data
                     if len(strings_in_RRQ) > 4:
                         data = transfer_file.read(block_size)
