@@ -24,67 +24,51 @@ def parse():
             try:
                 #The Arrays use negative indicies so that that, if the pi goes above threshold or has to display an error message,
                 #Grafana will still be able to receive the numbers and update the dashboards.
-                cpu_load = float(pi[-5].replace("CPU load: ", "").replace(" ", ""))
-                ram = float(pi[-4].replace("RAM usage: ", "").replace(" ", ""))
-                disk_usage = float(pi[-3].replace("Disk usage: ", "").replace(" ", ""))
-                pids = int(pi[-2].replace("# of PIDs: ", "").replace(" ", ""))
-                temp = float(pi[-1].replace("Temperature: ", "").replace(" F", "").replace(" ", ""))
+                if "CPU" not in pi_info:
+                    insert_data(pi_ip + " CPU", time, 0)
+                else:
+                    cpu_load = float(pi[-5].replace("CPU load: ", "").replace(" ", ""))
+                    insert_data(pi_ip + " CPU", time, cpu_load)
 
-                if pi_ip + " CPU" not in DATA:
-                    DATA[pi_ip + " CPU"] = {time: cpu_load}
+                if "RAM" not in pi_info:
+                    insert_data(pi_ip + " Ram", time, 0)
                 else:
-                    DATA[pi_ip + " CPU"][time] = cpu_load
+                    ram = float(pi[-4].replace("RAM usage: ", "").replace(" ", ""))
+                    insert_data(pi_ip + " Ram", time, ram)
 
-                if pi_ip + " Ram" not in DATA:
-                    DATA[pi_ip + " Ram"] = {time: ram}
+                if "Disk" not in pi_info:
+                    insert_data(pi_ip + " Disk Usage", time, 0)
                 else:
-                    DATA[pi_ip + " Ram"][time] = ram
+                    disk_usage = float(pi[-3].replace("Disk usage: ", "").replace(" ", ""))
+                    insert_data(pi_ip + " Disk Usage", time, disk_usage)
 
-                if pi_ip + " Disk Usage" not in DATA:
-                    DATA[pi_ip + " Disk Usage"] = {time: disk_usage}
+                if "PID" not in pi_info:
+                    insert_data(pi_ip + " PIDs", time, 0)
                 else:
-                    DATA[pi_ip + " Disk Usage"][time] = disk_usage
+                    pids = int(pi[-2].replace("# of PIDs: ", "").replace(" ", ""))
+                    insert_data(pi_ip + " PIDs", time, pids)
 
-                if pi_ip + " PIDs" not in DATA:
-                    DATA[pi_ip + " PIDs"] = {time: pids}
+                if "Temperature" not in pi_info:
+                    insert_data(pi_ip + " Temperature", time, 0)
                 else:
-                    DATA[pi_ip + " PIDs"][time] = pids
+                    temp = float(pi[-1].replace("Temperature: ", "").replace(" F", "").replace(" ", ""))
+                    insert_data(pi_ip + " Temperature", time, temp)
 
-                if pi_ip + " Temperature" not in DATA:
-                    DATA[pi_ip + " Temperature"] = {time: temp}
-                else:
-                    DATA[pi_ip + " Temperature"][time] = temp
-            except:
-                if pi_ip + " CPU" not in DATA:
-                    DATA[pi_ip + " CPU"] = {time: 0}
-                else:
-                    DATA[pi_ip + " CPU"][time] = {time: 0}
-
-                if pi_ip + " Ram" not in DATA:
-                    DATA[pi_ip + " Ram"] = {time: 0}
-                else:
-                    DATA[pi_ip + " Ram"][time] = {time: 0}
-
-                if pi_ip + " Disk Usage" not in DATA:
-                    DATA[pi_ip + " Disk Usage"] = {time: 0}
-                else:
-                    DATA[pi_ip + " Disk Usage"][time] = {time: 0}
-
-                if pi_ip + " PIDs" not in DATA:
-                    DATA[pi_ip + " PIDs"] = {time: 0}
-                else:
-                    DATA[pi_ip + " PIDs"][time] = {time: 0}
-
-                if pi_ip + " Temperature" not in DATA:
-                    DATA[pi_ip + " Temperature"] = {time: 0}
-                else:
-                    DATA[pi_ip + " Temperature"][time] = {time: 0}
+            except Exception as e:
+                print(e)
 
         return True
 
     except:
         print("Monitoring Log file not found, make sure log_path points to monitor.log file")
         return False
+
+
+def insert_data(field, time, value):
+    if field not in DATA:
+        DATA[field] = {time: value}
+    else:
+        DATA[field][time] = value
 
 
 def convert_to_time_ms(timestamp):
