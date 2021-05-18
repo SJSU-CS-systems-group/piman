@@ -29,6 +29,7 @@ from config_ui import web_ui
 from dhcp import dhcp
 from tcp import tcp
 from tftp import tftp
+from dns import dns
 from utility import power_cycle
 from utility import mac_mapper
 from piman import logger
@@ -54,7 +55,7 @@ switch_address : str
     ip address of the switch that connect pis
 mac_ip_file : str
     address of the file that save the mac address of pis and its ip address
-    
+
 Methods
 -----
 server()
@@ -65,7 +66,7 @@ reinstall(switch_address, port)
     to reinstall a specific pi
 exit_piman()
     to exit piman
-    
+
 '''
 
 data_dir = "./install/boot"
@@ -95,6 +96,9 @@ def server():
                         data_dir, tcp_port, ip], name="tcp")
     tcp_thread.start()
 
+    dns_thread = Thread(target=dns.do_dns())
+    dns_thread.start()
+
     ntp_thread = Thread(target=ntpserver.do_ntp())
     ntp_thread.start()
 
@@ -102,6 +106,7 @@ def server():
     signal.pthread_kill(tftp_thread.ident, 15)
     signal.pthread_kill(dhcp_thread.ident, 15)
     signal.pthread_kill(tcp_thread.ident, 15)
+    signal.pthread_kill(dns_thread.ident, 15)
     # ntp_thread does not need to be killed. ntpserver takes control of the terminal
     # when it is run, so after it is closed by a keyboard interrupt, the above
     # lines run closing the rest of the threads. ntp_thread will already be stopped
@@ -117,7 +122,7 @@ def reinstall(switch_address, interface, port):
         network_addr = ip[:7] + str(interface) + "." + str(port)
         f.write(network_addr)
     power_cycle.power_cycle(switch_address, interface, port)
-    
+
 def mapper(switch_address,interface, port, file):
     for portNum in port:
         power_cycle.power_cycle(switch_address,interface, portNum)
