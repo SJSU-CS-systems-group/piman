@@ -8,6 +8,7 @@ from zipfile import ZipFile
 import io
 import os
 from piman import logger
+import serializeme
 
 """
 This code is modified following Prof. Reed suggestion
@@ -148,14 +149,17 @@ class TFTPServer:
                                 block_size = int(strings_in_RRQ[index + 1])
 
                         #construct oack
-                        transfer_ack_opcode = pack("!H", TFTPServer.OACK_OPCODE)
-                        oack_data = 'tsize'.encode() + b'\0' + pack("!I", t_size) + b'\0'
-                        oack_data += 'block_size'.encode() + b'\0' + pack("!H", block_size) + b'\0'
-                        packet = transfer_ack_opcode + oack_data
-                        client_dedicated_sock.sendto(packet, addr)
+                        s = serializeme.Serialize({
+                            "opcode"  : ("2B", TFTPServer.OACK_OPCODE),
+                            "option1" : (serializeme.NULL_TERMINATE, "tsize"),
+                            "tsize"   : ("4B", t_size),
+                            "nullterm": "1B",
+                            "option2": (serializeme.NULL_TERMINATE, "block_size"),
+                            "blocksize": ("2B", block_size),
+                            "nullterm2": "1B",
+                        })
 
-                    # set the opcode for the packet we are sending
-                    transfer_opcode = pack("!H", TFTPServer.DATA_OPCODE)
+                        client_dedicated_sock.sendto(s.packetize(), addr)
 
                     # read up to the appropriate 512 bytes of data
                     if len(strings_in_RRQ) > 4:
@@ -166,9 +170,13 @@ class TFTPServer:
                     # if data is received increment block number, contruct the packet, and send it
                     if data:
                         block_number += 1
-                        transfer_block_number = pack("!H", block_number)
-                        packet = transfer_opcode + transfer_block_number + data
-                        client_dedicated_sock.sendto(packet, addr)
+
+                        s = serializeme.Serialize({
+                            "opcode"  : ("2B", TFTPServer.DATA_OPCODE),
+                            "block_num": ("2B", block_number)
+                        })
+
+                        client_dedicated_sock.sendto(s.packetize() + data, addr)
 
                 # ACK received, so we can now read the next block, if it doesn't match resend the previous block of data
                 elif opcode == TFTPServer.ACK_OPCODE:
@@ -183,17 +191,25 @@ class TFTPServer:
                         # if data read, increment block number, construct packet, and send it on the socket
                         if data:
                             block_number += 1
-                            transfer_block_number = pack("!H", block_number)
-                            packet = transfer_opcode + transfer_block_number + data
-                            client_dedicated_sock.sendto(packet, addr)
+
+                            s = serializeme.Serialize({
+                                "opcode": ("2B", TFTPServer.DATA_OPCODE),
+                                "block_num": ("2B", block_number)
+                            })
+
+                            client_dedicated_sock.sendto(s.packetize() + data, addr)
 
                         # if no data was read, read returns b'', then EOF was reached and download complete
                         else:
                             # sending a packet of zero data - to acknowledge end of transfer
                             block_number += 1
-                            transfer_block_number = pack("!H", block_number)
-                            packet = transfer_opcode + transfer_block_number
-                            client_dedicated_sock.sendto(packet, addr)
+
+                            s = serializeme.Serialize({
+                                "opcode": ("2B", TFTPServer.DATA_OPCODE),
+                                "block_num": ("2B", block_number),
+                            })
+
+                            client_dedicated_sock.sendto(s.packetize(), addr)
                             logger.warning('download complete, closing socket')
                             client_dedicated_sock.close()
                             break
@@ -206,28 +222,36 @@ class TFTPServer:
                         # decrement block number
                         block_number = block_number - 1
 
-                        transfer_block_number = pack("!H", block_number)
+                        s = serializeme.Serialize({
+                            "opcode": ("2B", TFTPServer.DATA_OPCODE),
+                            "block_num": ("2B", block_number)
+                        })
 
-                        packet = transfer_opcode + transfer_block_number + data
-
-                        client_dedicated_sock.sendto(packet, addr)
+                        client_dedicated_sock.sendto(s.packetize() + data, addr)
 
                     else:
                         # form an error packet and send it to the invalid TID
-                        error_opcode = pack("!H", TFTPServer.ERROR_OPCODE)
-                        error_code = pack("!H", 21)
-                        error_message = b"incorrect TID\0"
+
+
+                        s = serializeme.Serialize({
+                            "opcode": ("2B", TFTPServer.ERROR_OPCODE),
+                            "error_code": ("2B", 21),
+                            "error_msg" : (serializeme.NULL_TERMINATE, "incorrect TID")
+                        })
+
                         logger.error("incorrect TID")
-                        packet = error_opcode + error_code + error_message
-                        client_dedicated_sock.sendto(packet, addr)
+                        client_dedicated_sock.sendto(s.packetize(), addr)
                 else:
                     # form an error packet and send it to the invalid TID
-                    error_opcode = pack("!H", TFTPServer.ERROR_OPCODE)
-                    error_code = pack("!H", 20)
-                    error_message = b"illegal operation specified\0"
+
+                    s = serializeme.Serialize({
+                        "opcode": ("2B", TFTPServer.ERROR_OPCODE),
+                        "error_code": ("2B", 20),
+                        "error_msg": (serializeme.NULL_TERMINATE, "illegal operation specified")
+                    })
+
                     logger.error("illegal operation specified")
-                    packet = error_opcode + error_code + error_message
-                    client_dedicated_sock.sendto(packet, addr)
+                    client_dedicated_sock.sendto(s.packetize(), addr)
 
                 # listen for a client response for 10 seconds
                 # close everything and terminate if no response
@@ -242,12 +266,15 @@ class TFTPServer:
                     break
         except FileNotFoundError:
             # send an error packet to the requesting host
-            error_opcode = pack("!H", TFTPServer.ERROR_OPCODE)
-            error_code = pack("!H", 17)
-            error_message = b"No such file within the directory\0"
+
+            s = serializeme.Serialize({
+                "opcode": ("2B", TFTPServer.ERROR_OPCODE),
+                "error_code": ("2B", 17),
+                "error_msg": (serializeme.NULL_TERMINATE, "No such file within the directory")
+            })
+
             logger.error("No such file within the directory")
-            packet = error_opcode + error_code + error_message
-            client_dedicated_sock.sendto(packet, addr)
+            client_dedicated_sock.sendto(s.packetize(), addr)
             client_dedicated_sock.close()
 
     def join(self):
