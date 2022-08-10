@@ -2,7 +2,7 @@ from threading import Thread
 from socket import AF_INET, SOCK_STREAM, socket
 from struct import unpack, pack
 import traceback
-from piman import logger
+from piman import logger, reinstall_file
 from datetime import datetime
 
 RECV_IS_INSTALLED = "IS_INSTALLED"
@@ -98,9 +98,8 @@ class TCPServer:
         """
         This function serves the control socket's coming requests.
         """
-        reinstall_file = list()
-        with open('reinstall.txt') as fp:
-            reinstall_file = fp.read()
+        reinstall_file = self.__read_reinstall_file()
+
         try:
             logger.info("serving client from: {}".format(client_addr))
             fd = client_socket.makefile()
@@ -131,6 +130,8 @@ class TCPServer:
                     if client_addr[0] in reinstall_file:
                         logger.info("TCP - need to reinstall, sending format")
                         client_socket.send(SEND_FORMAT)
+                        #clear reinstall.txt file after sending format signal
+                        self.__clear_reinstall_file()
                     else:
                         logger.info("TCP - installed, sending boot")
                         client_socket.send(SEND_BOOT)
@@ -147,6 +148,22 @@ class TCPServer:
             logger.error(traceback.print_exc())
         logger.info("tcpdump")
         client_socket.close()
+
+    def __read_reinstall_file(self):
+        reinstall_text = ""
+        try: 
+            with open(reinstall_file) as fp:
+                reinstall_text = fp.read()
+        except FileNotFoundError:
+            reinstall_text = ""
+        return reinstall_text
+
+    def __clear_reinstall_file(self):
+        try: 
+            with open(reinstall_file, "r+") as fp:
+                fp.truncate(0)
+        except FileNotFoundError:
+            return
 
     def __transfer_file(self, client_socket):
         """
