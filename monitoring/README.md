@@ -202,6 +202,7 @@ This will place the localhost address at the top of /etc/resolv.conf everytime t
 1. Once you have logged in, hover over the Settings tab on the left, and click on "Data Sources". Click on "Add Data Source" to the right on the page which appears. Search for Prometheus and hit "Select". This will open its configuration page.
 
 2. Find the HTTP section, and the first option should be URL. Set this to `172.27.x.128:9090` where x is your city number. 
+
 3. The second option under HTTP should be Access. Set it to "Server". Then, click Save and Test.
 
 ## Making the dashboard
