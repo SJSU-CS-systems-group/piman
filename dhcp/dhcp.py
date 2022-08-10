@@ -10,6 +10,8 @@ import uuid
 from .listener import *
 from piman import logger
 import csv
+import serializeme
+import ipaddress
 
 
 """
@@ -54,27 +56,25 @@ class WriteBootProtocolPacket(object):
                 setattr(self, option_name, getattr(configuration, option_name))
 
     def to_bytes(self):
-        result = bytearray(236)
-        
-        result[0] = self.message_type
-        result[1] = self.hardware_type
-        result[2] = self.hardware_address_length
-        result[3] = self.hops
+        # Implementation with serializeme API
+        packet_format = {   "message_type"              : ("1B", self.message_type),
+                            "hardware_type"             : ("1B", self.hardware_type),
+                            "hardware_address_length"   : ("1B", self.hardware_address_length),
+                            "hops"                      : ("1B", self.hops),
+                            "transaction_id"            : ("4B", self.transaction_id),
+                            "seconds_elapsed"           : ("2B", self.seconds_elapsed),
+                            "bootp_flags"               : ("2B", self.bootp_flags),
+                            "client_ip_address"         : ("4B", int(ipaddress.IPv4Address(self.client_ip_address))),
+                            "your_ip_address"           : ("4B", int(ipaddress.IPv4Address(self.your_ip_address))),
+                            "next_server_ip_address"    : ("4B", int(ipaddress.IPv4Address(self.next_server_ip_address))),
+                            "relay_agent_ip_address"    : ("4B", int(ipaddress.IPv4Address(self.relay_agent_ip_address))),
+                            "client_mac_address"        : ("6B", int(self.client_mac_address.translate({ord(i): None for i in ':.- '}), 16)),
+                            "rest_of_bootp"             : "202B",
+                            "magic_cookie"              : ("4B", int(ipaddress.IPv4Address(self.magic_cookie)))}
 
-        result[4:8] = struct.pack('>I', self.transaction_id)
+        result = serializeme.Serialize(packet_format).packetize()
 
-        result[8:10] = shortpack(self.seconds_elapsed)
-        result[10:12] = shortpack(self.bootp_flags)
-
-        result[12:16] = inet_aton(self.client_ip_address)
-        result[16:20] = inet_aton(self.your_ip_address)
-        result[20:24] = inet_aton(self.next_server_ip_address)
-        result[24:28] = inet_aton(self.relay_agent_ip_address)
-
-        result[28:28 + self.hardware_address_length] = macpack(self.client_mac_address)
-        
-        result += inet_aton(self.magic_cookie)
-
+        # No API used so no change for this last part of the function
         for option in self.options:
             value = self.get_option(option)
             # print(option, value)
@@ -82,6 +82,7 @@ class WriteBootProtocolPacket(object):
                 continue
             result += bytes([option, len(value)]) + value
         result += bytes([255])
+        #logger.info(result)
         return bytes(result)
 
     def get_option(self, option):
@@ -593,34 +594,48 @@ def udp_checksum(sip, dip, bootp):
     return IP_checksum(pseudoUDP)
 
 def construct_packet(inter, dmac, sip, dip, bootp):
-    # BOOTP Payload
+    # Implementation of this function with serializeme API
     bootp = bootp.to_bytes()
-    udp   = bytearray(UDP)
-    ip    = bytearray(IP)
-    ether = bytearray(ETHER)
-
-    # UDP Packet
     udp_length = len(bootp) + 8
-    udp[4:6] = (udp_length).to_bytes(2, 'big')
 
-    udp[6:8] = udp_checksum(sip, dip, bootp)
-
-    # IP Packet
+    # Legacy code from old implementation, needed for IP checksum
+    ip = bytearray(IP)
     ip[ 2: 4] = (udp_length + 20).to_bytes(2, 'big')
-    ip[ 4: 6] = (randrange(0, 65535)).to_bytes(2, 'big')
+    identification = randrange(0, 65535)
+    ip[ 4: 6] = identification.to_bytes(2, 'big')
     ip[12:16] = inet_aton(sip)
     ip[16:20] = inet_aton(dip)
-    ip[10:12] = IP_checksum(ip)
 
-    # Ethernet Frame
-    ether[0: 6] = macpack(dmac)
     try:
         mac = open('/sys/class/net/'+inter+'/address').readline()
     except:
         print("Failed to get mac adress for ", inter)
-    ether[6:12] = macpack(mac[0:17])
 
-    packet = b''.join([bytes(ether), bytes(ip), bytes(udp), bootp])
+    # building the packet header
+    header_format = {   # start of ethernet frame
+                        "destination"           : ("6B", int(dmac.translate({ord(i): None for i in ':.- '}), 16)),
+                        "source"                : ("6B", int(mac[0:17].translate({ord(i): None for i in ':.- '}), 16)),
+                        "type"                  : ("2B", 2048),   # equivalent to type \x08\x00 for ETHER
+                        # start of IP header
+                        "version"               : (4, 4),   # version 4
+                        "ihl"                   : (4, 5),   # ip header length = 5*4 = 20 bytes
+                        "type_of_service"       : "1B",
+                        "total_length"          : ("2B", udp_length + 20),
+                        "identification"        : ("2B", identification),
+                        "flags"                 : (3, 2),
+                        "fragment_offset"       : 13,
+                        "time_to_live"          : ("1B", 64),
+                        "protocol"              : ("1B", 17),   # protocol 17 for UDP
+                        "header_checksum"       : ("2B", int.from_bytes(IP_checksum(ip), "big")),
+                        "source_address"        : ("4B", int(ipaddress.IPv4Address(sip))),
+                        "destination_address"   : ("4B", int(ipaddress.IPv4Address(dip))),
+                        # start of UDP header
+                        "source_port"           : ("2B", 67),
+                        "destination_port"      : ("2B", 68),
+                        "length"                : ("2B", udp_length),
+                        "checksum"              : ("2B", int.from_bytes(udp_checksum(sip, dip, bootp), "big"))}
+
+    packet = serializeme.Serialize(header_format).packetize() + bootp
     return packet
 
 # https://github.com/mdelatorre/checksum/blob/master/ichecksum.py

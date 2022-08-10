@@ -1,20 +1,22 @@
 #!/bin/bash
 if [[ $UID -eq 0 ]]
-then 
+then
    echo "Do not run $0 as root"
    exit 2
 fi
 rm -rf build
 mkdir build
-PYTHONUSERBASE=$PWD/build python3 -m pip install --ignore-installed click pysnmp Flask python-dotenv PyYAML
+PYTHONUSERBASE=$PWD/build python3 -m pip install --ignore-installed click pysnmp serializeme Flask python-dotenv PyYAML
 mkdir build/piman.app
 (
     cd build/lib/python*/site-packages
     mv $(ls | grep -v -) ../../../piman.app
 )
-cp -r logging.conf utility tftp dhcp monitoring tcp *.py build/piman.app
+
 # copy hosts.csv and monitoring.config into build
 cp -r monitoring/monitoring.config build
+cp -r logging.conf utility tftp dhcp monitoring tcp dns *.py build/piman.app
+
 mkdir build/piman.app/install
 mkdir build/logs
 cp piman.yaml build

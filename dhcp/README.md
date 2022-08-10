@@ -178,7 +178,7 @@ Related Classes and functions: [Transaction](###Transaction), ReadBootProtocolPa
 
 #### Function: to_bytes(self)
 *Description*:   
-Converts integer 236 into a byte array then sets the instance variables to those specific bytes and converts it back into byte form. Those instance variables are packed into a 32-bit format first before being assigned to those bytes - writing the packet for transport.
+Converts integer 236 into a dictionary using the SerializeMe API, then changes the dictionary into a bytearray, writing the packet for transport.
 
 *Called by*:    
 `dhcp.py` -> `DHCPServer` -> `broadcast(self, packet)`        
