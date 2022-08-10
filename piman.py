@@ -29,6 +29,8 @@ from config_ui import web_ui
 from dhcp import dhcp
 from tcp import tcp
 from tftp import tftp
+# importing monitoring client
+from monitoring import monitoring_client
 from dns import dns
 from utility import power_cycle
 from utility import mac_mapper
@@ -38,7 +40,6 @@ import ntpserver
 
 '''
 piman.py
-
 Attributes:
 -----
 data_dir : str
@@ -78,8 +79,9 @@ mac_ip_file = "hosts.csv"
 reinstall_file = "reinstall.txt"
 lease_time = 600
 interface = config['interface']
+config_file = "monitoring.config"
+log_file = "monitor.log"
 private_number = config['private_number']
-
 
 def server():
     config_ui_thread = Thread(target=config_ui, args=[
@@ -113,6 +115,9 @@ def server():
     # when it is run, so after it is closed by a keyboard interrupt, the above
     # lines run closing the rest of the threads. ntp_thread will already be stopped
 
+# start monitoring client
+def monitoring():
+    monitoring_client.start_from_piman()
 
 def restart(switch_address, interface, ports):
     for port in ports:
@@ -150,6 +155,9 @@ if __name__ == "__main__":
 
     if argv[1] == "server":
         server()
+    elif argv[1] == "monitoring":
+        # launching monitoring
+        monitoring()
     elif argv[1] == "restart":
         if len(argv) < 5:
             exit_piman()
@@ -164,4 +172,3 @@ if __name__ == "__main__":
         reinstall(argv[2], argv[3], argv[4])
     elif argv[1] == "config":
         config_ui(argv[2], argv[3], argv[4])
-

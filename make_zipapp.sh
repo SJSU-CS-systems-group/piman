@@ -12,7 +12,11 @@ mkdir build/piman.app
     cd build/lib/python*/site-packages
     mv $(ls | grep -v -) ../../../piman.app
 )
+
+# copy hosts.csv and monitoring.config into build
+cp -r monitoring/monitoring.config build
 cp -r logging.conf utility tftp dhcp monitoring tcp dns *.py build/piman.app
+
 mkdir build/piman.app/install
 mkdir build/logs
 cp piman.yaml build

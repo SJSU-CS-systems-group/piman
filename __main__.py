@@ -1,4 +1,3 @@
-
 import click
 import piman
 from dhcp import test_dhcp
@@ -14,6 +13,10 @@ def cli():
 def server():
     piman.server()
 
+# adding monitoring command
+@cli.command()
+def monitoring():
+    piman.monitoring()
 
 @cli.command()
 @click.argument('switch_address')
